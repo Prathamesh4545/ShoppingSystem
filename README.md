@@ -25,3 +25,14 @@ The following tasks were accomplished in this phase:
 - Frontend Development: Designed and implemented a front page to display the content to the client, utilizing React's functionalities such as useState hook, useEffect hook, component structuring, routing, useContext, and more.
 
 This marks the successful completion of the first stage of the ShoppingSystem project, laying a solid foundation for future development.
+
+## Phase 2 Completion (25-Jan-2025)
+
+The second phase of the ShoppingSystem project has successfully moved forward, primarily focusing on crucial functionalities. 
+Here's a summary of the tasks accomplished:
+- API Development: Implemented the "add product" endpoint.
+- Frontend Enhancements:
+    - Designed and developed form submission handling.
+    - Integrated image upload capability.
+    - Fetched and displayed all necessary data.
+Despite fewer activities than previous phases, the phase efficiently addressed vital features, ensuring a robust user experience.
