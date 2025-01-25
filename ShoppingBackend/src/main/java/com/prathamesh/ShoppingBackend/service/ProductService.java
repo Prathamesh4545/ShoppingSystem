@@ -1,9 +1,12 @@
 package com.prathamesh.ShoppingBackend.service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.prathamesh.ShoppingBackend.model.Product;
 import com.prathamesh.ShoppingBackend.repository.ProductRepo;
@@ -13,7 +16,7 @@ public class ProductService {
 
     private ProductRepo productRepo;
 
-    public ProductService(ProductRepo productRepo){
+    public ProductService(ProductRepo productRepo) {
         this.productRepo = productRepo;
     }
 
@@ -22,8 +25,15 @@ public class ProductService {
     }
 
     public Product getProductById(int id) {
-       return productRepo.findById(id).orElse(null);
+        return productRepo.findById(id).orElse(null);
     }
 
+    public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
+        product.setImageData(imageFile.getBytes());
+        product.setImageName(imageFile.getOriginalFilename());
+        product.setImageType(imageFile.getContentType());
+        return productRepo.save(product);
+
+    }
 
 }

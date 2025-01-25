@@ -15,7 +15,7 @@ const Product = () => {
     if (id) {
       fetchProduct();
     } else {
-      console.log("No id parameter found in the URL"); // Add this line to log a message if no id parameter is found
+      console.log("No id parameter found in the URL");
     }
   }, [id]);
 
@@ -25,15 +25,13 @@ const Product = () => {
     }
   }, [product.quantity]);
 
-    
   const checkStock = () => {
-    if(product.quantity > 0){
-      return "In Stock"
-    }else{
-      return "Out of Stock"
+    if (product.quantity > 0) {
+      return "In Stock";
+    } else {
+      return "Out of Stock";
     }
-  }
-
+  };
 
   const fetchProduct = async () => {
     setLoading(true);
@@ -51,11 +49,11 @@ const Product = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center w-56 h-56 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+      <div className="flex items-center justify-center w-full h-64 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
         <div role="status">
           <svg
             aria-hidden="true"
-            className="w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
+            className="w-12 h-12 text-gray-200 animate-spin dark:text-gray-600 fill-blue-600"
             viewBox="0 0 100 101"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -80,37 +78,61 @@ const Product = () => {
   }
 
   return (
-    <div className="m-8">
-      <div
-        href="#"
-        className="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-      >
-        <img
-          className="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-s-lg"
-          src=""
-          alt="product image"
-        />
-        <div className="flex flex-col justify-between p-4 leading-normal">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {product.category}
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row items-center bg-white border border-gray-200 rounded-lg shadow-lg md:max-w-4xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
+        {/* Image Section */}
+        <div className="w-full md:w-1/2 p-4">
+          <img
+            className="w-full h-auto object-cover rounded-lg shadow-lg transition-transform duration-300 transform hover:scale-105"
+            src={
+              product.imageData
+                ? `data:image/jpeg;base64,${product.imageData}`
+                : "/default-image.jpg"
+            }
+            alt={product.productName || "Product image"}
+          />
+        </div>
+
+        {/* Product Details Section */}
+        <div className="w-full md:w-1/2 p-6 flex flex-col justify-between">
+          <span className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+            {product.category || "Category not available"}
           </span>
-          <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {product.name}
+          <h5 className="text-3xl font-semibold text-gray-900 dark:text-white mb-4">
+            {product.productName || "Product Name Not Available"}
           </h5>
-          <p className="mb-3 font-normal text-gray-700 dark:text-gray-400">
-            {product.desc}
+          <p className="text-gray-700 dark:text-gray-400 mb-4">
+            {product.desc || "No description available"}
           </p>
-          <span className="text-3xl font-bold text-gray-900 dark:text-white">
-             ${product.price}
-          </span>
-          <span className="text-sm font-bold text-gray-900 dark:text-white">
-           Product Listed On : {product.releaseDate}
-          </span>
-          
-          <div className="shadow-xl text-center p-2 bg-gray-100 dark:bg-gray-700 rounded-lg">
-          <span className="text-sm font-bold text-gray-900 dark:text-white">
-            { checkStock()} 
-          </span>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-4xl font-bold text-gray-900 dark:text-white">
+              ${product.price || "N/A"}
+            </span>
+            <div className="flex items-center text-sm font-semibold text-gray-500 dark:text-gray-400">
+              <span className="mr-2">Product Listed On:</span>
+              <span>
+                {product.releaseDate
+                  ? product.releaseDate.substring(0, 10)
+                  : "N/A"}
+              </span>
+            </div>
+          </div>
+
+          {/* Stock Status */}
+          <div className="text-center py-2 rounded-lg bg-gray-200 dark:bg-gray-700">
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              {checkStock()}
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex mt-6 space-x-4">
+            <button className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
+              Add to Cart
+            </button>
+            <button className="bg-green-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md hover:bg-green-700 transition duration-300">
+              Buy Now
+            </button>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 const Home = () => {
   const { products } = useContext(DataContext);
 
+
   return (
     <>
       <div className="m-2 flex w-screen flex-wrap justify-center">
@@ -19,12 +20,12 @@ const Home = () => {
               <span className="hidden">{product.id}</span>
               <img
                 className="h-52 object-cover p-8 rounded-sm"
-                src=""
+                src={`data:image/jpeg;base64,${product.imageData}`}
                 alt="product image"
               />
               <div className="px-5 pb-5">
                 <h5 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-white">
-                  {product.name}
+                  {product.productName}
                 </h5>
                 <div className="flex items-center mt-2.5 mb-5">
                   <div className="flex items-center space-x-1 rtl:space-x-reverse">
