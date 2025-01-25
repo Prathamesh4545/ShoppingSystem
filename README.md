@@ -16,6 +16,16 @@ Before you get started, ensure you have the following installed on your machine:
 - Maven (for managing Java dependencies)
 - A modern web browser
 
+## How To Start Projects 
+- 1st download
+- In forntend open terminal and install node module using (npm install)
+- after start the backend project 1st
+- and then start frontend project using (npm run dev)
+- and used this link on browser -->  http://localhost:5173/
+- also if you want used postman you can used without any worried
+- localhost:8080/api/products  --> this is for seen all products
+- Also one thing there is already have some data is in data.sql page and this doesn't have image because it is in byte formate so if you want you can add used frontend only 
+
 ## Phase 1 Completion (23-Jan-2025)
 
 In the initial phase, the project adopts an MVC architecture with a four-layered structure comprising Controller, Service, Repository, and Model. 
@@ -35,4 +45,9 @@ Here's a summary of the tasks accomplished:
     - Designed and developed form submission handling.
     - Integrated image upload capability.
     - Fetched and displayed all necessary data.
+- Route :- http://localhost:5173/
+- <Route path='/' element={<Home/>}/>
+- <Route path='/product/:id' element={<Product/>}/>
+- <Route path='/product/add' element={<AddProduct/>}/>
+- 
 Despite fewer activities than previous phases, the phase efficiently addressed vital features, ensuring a robust user experience.
