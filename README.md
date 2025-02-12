@@ -1,6 +1,9 @@
 # ShoppingSystem
 
-This project is a full-stack application built using React for the frontend and Java Spring Boot for the backend. The goal of the project is to create a seamless and interactive shopping system while allowing the developer to learn and practice both React and Spring Boot.
+I highly recommend downloading and running this project. It is one of the best projects I have worked on, and although it is still in the development phase, I believe it has significant potential. Please note that there are some incomplete SQL queries within the build that may lack associated images. However, feel free to add your own data to test the functionality and explore how it operates.
+Your feedback would be greatly appreciated as I continue to improve and refine the project.
+
+This project is a full-stack application built using React for the frontend and Java Spring Boot for the backend. The goal of the project is to create a seamless and interactive shopping system while allowing me to learn and practice both React and Spring Boot.
 
 ## Project Overview
 
@@ -34,6 +37,8 @@ The following tasks were accomplished in this phase:
 - APIs: Created two APIs to fetch all data and data by ID.
 - Frontend Development: Designed and implemented a front page to display the content to the client, utilizing React's functionalities such as useState hook, useEffect hook, component structuring, routing, useContext, and more.
 
+---
+
 This marks the successful completion of the first stage of the ShoppingSystem project, laying a solid foundation for future development.
 
 ## Phase 2 Completion (25-Jan-2025)
@@ -49,5 +54,27 @@ Here's a summary of the tasks accomplished:
 - <Route path='/' element={<Home/>}/>
 - <Route path='/product/:id' element={<Product/>}/>
 - <Route path='/product/add' element={<AddProduct/>}/>
-- 
+
+---
+  
 Despite fewer activities than previous phases, the phase efficiently addressed vital features, ensuring a robust user experience.
+
+## Phase 3 Completion
+
+In Third phase of the ShoppingSystem project has successfully move forward, primarily focusing on crucial functionalities.
+Here's a summary of the tasks accomplished:
+- API Development:
+    - Implemented the "get all product" endpoint.
+    - Implemented the "update product" endpoint.
+    - Implemented the "delete product" endpoint.
+- Frontend Enhancements:
+    - Designed a search bar with multiple categories.
+    - Implements the get all products api with specific design.
+    - Inside all product design i have create two button one for update and another for delete product.
+- Route :- http://localhost:5173/
+- <Route path='/product' element={<GetProductById/>}/>
+- <Route path='/product/update/:id' element={<UpdateProduct/>}/>
+  
+---
+
+Feel free to add your own data to test the functionality and explore the system's capabilities. Contributions and feedback are highly encouraged!
