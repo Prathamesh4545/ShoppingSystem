@@ -2,13 +2,13 @@
 
 I am pleased to introduce the ShoppingSystem project, an innovative full-stack application currently in development. Despite being in the development phase, it has demonstrated significant potential. Please note that some SQL queries are incomplete and may lack associated images. However, you are encouraged to add your own data to test the functionality and explore its capabilities. Your feedback would be invaluable as I strive to enhance and refine the project further.
 
-This project is a full-stack application built using React for the frontend and Java Spring Boot for the backend. The goal of the project is to create a seamless and interactive shopping system while allowing me to learn and practice both React and Spring Boot.
-
 ## Project Overview
 
-This application consists of two main components:
+The ShoppingSystem application is designed to create a seamless and interactive shopping experience. It consists of two main components:
 1. **Frontend**: A dynamic and interactive interface built using React.
 2. **Backend**: A robust and scalable server-side using Java Spring Boot.
+
+- This project follows an MVC (Model-View-Controller) architecture with a four-layered structure: Controller, Service, Repository, and Model.
 
 ## Requirements
 
