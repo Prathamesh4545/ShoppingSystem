@@ -84,12 +84,8 @@ const Product = () => {
         <div className="w-full md:w-1/2 p-4">
           <img
             className="w-full h-auto object-cover rounded-lg shadow-lg transition-transform duration-300 transform hover:scale-105"
-            src={
-              product.imageData
-                ? `data:image/jpeg;base64,${product.imageData}`
-                : "/default-image.jpg"
-            }
-            alt={product.productName || "Product image"}
+             src={`data:image/jpeg;base64,${product.imageData}`}
+                alt="product image"
           />
         </div>
 

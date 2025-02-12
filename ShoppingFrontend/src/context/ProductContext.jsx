@@ -5,6 +5,8 @@ export const DataContext = createContext();
 
 const ProductContext = ({ children }) => {
   const [products, setProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchField, setSearchField] = useState("name");
 
   useEffect(() => {
     getAllProducts();
@@ -19,10 +21,22 @@ const ProductContext = ({ children }) => {
     }
   };
 
+  const filteredProducts = products.filter(product => {
+    const value = product[searchField]?.toString().toLowerCase() || "";
+    return value.includes(searchQuery.toLowerCase());
+  });
+
   return (
     <>
-      <DataContext.Provider value={{ products, setProducts, getAllProducts }}>
-        {children} 
+      <DataContext.Provider
+        value={{
+          products: filteredProducts,
+          getAllProducts,
+          setSearchQuery,
+          setSearchField,
+        }}
+      >
+        {children}
       </DataContext.Provider>
     </>
   );

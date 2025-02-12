@@ -1,6 +1,5 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import { DataContext } from "../context/ProductContext";
-import Product from "./Product";
 import { Link } from "react-router-dom";
 
 const Home = () => {
@@ -10,6 +9,7 @@ const Home = () => {
   return (
     <>
       <div className="m-2 flex w-screen flex-wrap justify-center">
+
         {products.map((product) => {
           return (
             <Link
