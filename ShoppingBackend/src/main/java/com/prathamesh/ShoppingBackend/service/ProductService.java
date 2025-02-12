@@ -1,6 +1,7 @@
 package com.prathamesh.ShoppingBackend.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,5 +36,22 @@ public class ProductService {
         return productRepo.save(product);
 
     }
+
+    public Product updateProduct(int id, Product product, MultipartFile imageFile) throws IOException {
+        product.setImageData(imageFile.getBytes());
+        product.setImageName(imageFile.getOriginalFilename());
+        product.setImageType(imageFile.getContentType());
+        return productRepo.save(product);
+    }
+
+    public void deleteProduct(int id) {
+        productRepo.deleteById(id);
+    }
+
+    public List<Product> searchProduct(String searchField, String searchQuery) {
+        
+        return productRepo.searchProducts(searchField, searchQuery);
+    }
+
 
 }
