@@ -64,8 +64,16 @@ const AddProduct = () => {
   };
 
   const validateForm = () => {
-    const { productName, brand, category, price, quantity, releaseDate } = formData;
-    if (!productName || !brand || !category || !price || !quantity || !releaseDate) {
+    const { productName, brand, category, price, quantity, releaseDate } =
+      formData;
+    if (
+      !productName ||
+      !brand ||
+      !category ||
+      !price ||
+      !quantity ||
+      !releaseDate
+    ) {
       toast.error("Please fill in all the required fields.", {
         position: "top-right",
         autoClose: 5000,
@@ -86,7 +94,17 @@ const AddProduct = () => {
 
     if (!validateForm()) return;
 
-    const { productName, brand, category, price, quantity, releaseDate, desc, available, image } = formData;
+    const {
+      productName,
+      brand,
+      category,
+      price,
+      quantity,
+      releaseDate,
+      desc,
+      available,
+      image,
+    } = formData;
 
     const product = {
       productName,
@@ -125,7 +143,7 @@ const AddProduct = () => {
         theme: "light",
       });
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Error adding product!", {
+      toast.error(error?.response?.data?.message || `Error adding product!`, {
         position: "top-right",
         autoClose: 5000,
         hideProgressBar: true,
@@ -141,12 +159,20 @@ const AddProduct = () => {
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-slate-100 rounded">
-        <form className="space-y-8 divide-y divide-gray-200" onSubmit={onSubmitHandler}>
+        <form
+          className="space-y-8 divide-y divide-gray-200"
+          onSubmit={onSubmitHandler}
+        >
           <div className="border-b border-gray-900/10 pb-12">
-            <h2 className="text-5xl font-serif text-center font-semibold text-gray-900">Add Products</h2>
+            <h2 className="text-5xl font-serif text-center font-semibold text-gray-900">
+              Add Products
+            </h2>
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
               <div className="sm:col-span-3">
-                <label htmlFor="name" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="name"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Name
                 </label>
                 <div className="mt-2">
@@ -162,7 +188,10 @@ const AddProduct = () => {
               </div>
 
               <div className="sm:col-span-3">
-                <label htmlFor="brand" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="brand"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Brand
                 </label>
                 <div className="mt-2">
@@ -178,7 +207,10 @@ const AddProduct = () => {
               </div>
 
               <div className="sm:col-span-3">
-                <label htmlFor="category" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="category"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Category
                 </label>
                 <div className="mt-2">
@@ -194,7 +226,10 @@ const AddProduct = () => {
               </div>
 
               <div className="sm:col-span-3">
-                <label className="block mb-2 text-sm font-medium text-gray-900" htmlFor="user_avatar">
+                <label
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                  htmlFor="user_avatar"
+                >
                   Product Image
                 </label>
                 <div className="mt-2">
@@ -207,14 +242,21 @@ const AddProduct = () => {
                   />
                   {imagePreview && (
                     <div className="mt-2">
-                      <img src={imagePreview} alt="Product Preview" className="w-32 h-32 object-cover rounded-md" />
+                      <img
+                        src={imagePreview}
+                        alt="Product Preview"
+                        className="w-32 h-32 object-cover rounded-md"
+                      />
                     </div>
                   )}
                 </div>
               </div>
 
               <div className="sm:col-span-2 sm:col-start-1">
-                <label htmlFor="release-date" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="release-date"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Release Date
                 </label>
                 <div className="mt-2">
@@ -230,7 +272,10 @@ const AddProduct = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="quantity" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="quantity"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Quantity
                 </label>
                 <div className="mt-2">
@@ -246,7 +291,10 @@ const AddProduct = () => {
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="price" className="block text-sm/6 font-medium text-gray-900">
+                <label
+                  htmlFor="price"
+                  className="block text-sm/6 font-medium text-gray-900"
+                >
                   Price
                 </label>
                 <div className="mt-2">
@@ -262,12 +310,17 @@ const AddProduct = () => {
               </div>
 
               <div className="col-span-full">
-                <label htmlFor="message" className="block mb-2 text-sm font-medium text-gray-900">
+                <label
+                  htmlFor="message"
+                  className="block mb-2 text-sm font-medium text-gray-900"
+                >
                   Description
                 </label>
                 <textarea
                   value={formData.desc}
-                  onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, desc: e.target.value })
+                  }
                   id="desc"
                   rows="4"
                   className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300"
@@ -279,7 +332,11 @@ const AddProduct = () => {
             <ToastContainer />
 
             <div className="mt-6 flex items-center justify-end gap-x-6">
-              <button type="button" onClick={resetForm} className="text-sm/6 font-semibold text-gray-900">
+              <button
+                type="button"
+                onClick={resetForm}
+                className="text-sm/6 font-semibold text-gray-900"
+              >
                 Cancel
               </button>
               <button

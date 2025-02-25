@@ -1,18 +1,14 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { DataContext } from "../context/ProductContext";
-import { useCart } from "../context/CartContext";
-import { Popover, Modal, Label, TextInput, Button } from "flowbite-react";
+import { CartContext } from "../context/CartContext";
 import { FaSearch, FaTimes, FaBars, FaShoppingCart, FaUser } from "react-icons/fa";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
-  const [email, setEmail] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State to track login status
   const { setSearchQuery, setSearchField } = useContext(DataContext);
-  const { cart } = useCart(); // Use the custom hook to access cart state
+  const { cart } = useContext(CartContext);
   const [searchQuery, setSearchQueryState] = useState("");
   const location = useLocation();
 
@@ -36,25 +32,6 @@ const Navbar = () => {
 
   const handleSearchToggle = () => {
     setIsSearchOpen(!isSearchOpen);
-  };
-
-  const handleLoginModal = () => {
-    setOpenModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
-
-  const handleLogin = () => {
-    // Simulate login logic
-    setIsLoggedIn(true);
-    setOpenModal(false);
-  };
-
-  const handleLogout = () => {
-    // Simulate logout logic
-    setIsLoggedIn(false);
   };
 
   return (
@@ -144,39 +121,12 @@ const Navbar = () => {
             </Link>
 
             {/* User Icon */}
-            {isLoggedIn ? (
-              // If logged in, show profile popover
-              <Popover
-                trigger="hover"
-                content={
-                  <div className="text-sm text-gray-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                    <div className="space-y-2 p-4">
-                      <div className="text-gray-700 dark:text-white">
-                        Welcome, User!
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="block w-full text-left text-gray-700 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                }
-              >
-                <button className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white transition duration-300">
-                  <FaUser className="w-5 h-5" />
-                </button>
-              </Popover>
-            ) : (
-              // If not logged in, show login modal on click
-              <button
-                onClick={handleLoginModal}
-                className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white transition duration-300"
-              >
-                <FaUser className="w-5 h-5" />
-              </button>
-            )}
+            <Link
+              to="/account"
+              className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-300 dark:hover:text-white transition duration-300"
+            >
+              <FaUser className="w-5 h-5" />
+            </Link>
           </div>
         </div>
 
@@ -219,14 +169,16 @@ const Navbar = () => {
             onClick={handleSearchToggle}
           >
             <div
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6"
+              className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md p-6 transform transition-all duration-300 ${
+                isSearchOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex flex-row justify-stretch items-center">
+              <div className="flex flex-col space-y-4">
                 <select
                   id="products"
                   onChange={handleSearchFieldChange}
-                  className="block text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  className="block w-full p-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Search By</option>
                   <option value="productName">Product Name</option>
@@ -238,7 +190,7 @@ const Navbar = () => {
                     type="text"
                     value={searchQuery}
                     onChange={handleInputChange}
-                    className="block w-full pl-10 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    className="block w-full p-2 pl-10 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                     placeholder="Search..."
                   />
                   <FaSearch className="absolute left-3 top-3 text-gray-500 dark:text-gray-400" />
@@ -248,48 +200,6 @@ const Navbar = () => {
           </div>
         )}
       </div>
-
-      {/* Login Modal */}
-      <Modal show={openModal} size="md" onClose={handleCloseModal} popup>
-        <Modal.Header />
-        <Modal.Body>
-          <div className="space-y-6">
-            <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-              Sign in to our platform
-            </h3>
-            <div>
-              <div className="mb-2 block">
-                <Label htmlFor="email" value="Your email" />
-              </div>
-              <TextInput
-                id="email"
-                placeholder="name@company.com"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <div className="mb-2 block">
-                <Label htmlFor="password" value="Your password" />
-              </div>
-              <TextInput id="password" type="password" required />
-            </div>
-            <div className="w-full">
-              <Button onClick={handleLogin}>Log in to your account</Button>
-            </div>
-            <div className="flex justify-between text-sm font-medium text-gray-500 dark:text-gray-300">
-              Not registered?&nbsp;
-              <a
-                href="#"
-                className="text-cyan-700 hover:underline dark:text-cyan-500"
-              >
-                Create account
-              </a>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
     </nav>
   );
 };
