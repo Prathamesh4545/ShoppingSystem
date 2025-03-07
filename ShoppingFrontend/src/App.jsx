@@ -1,30 +1,60 @@
-import React from "react";
-import Navbar from "./components/Navbar";
-import Home from "./components/Home";
-import GetProductById from "./components/GetProductById";
-import Product from "./components/Product";
-import { Route, Routes } from "react-router-dom";
-import AddProduct from "./components/AddProduct";
-import Footer from "./components/Footer";
-import UpdateProduct from "./components/UpdateProduct";
-import Cart from "./components/Cart";
+import React, { Suspense } from "react";
+import { Route, Routes} from "react-router-dom";
+import Navbar from "./components/common/Navbar";
+import Footer from "./components/common/Footer";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+// Lazy loading components
+const Home = React.lazy(() => import("./components/Home"));
+const GetProductById = React.lazy(() => import("./components/Product/GetProductById"));
+const Product = React.lazy(() => import("./components/Product/Product"));
+const AddProduct = React.lazy(() => import("./components/Product/AddProduct"));
+const UpdateProduct = React.lazy(() => import("./components/Product/UpdateProduct"));
+const Cart = React.lazy(() => import("./components/Cart"));
 
 const App = () => {
   return (
     <>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/product/:id" element={<Product />} />
-        <Route path="/product/add" element={<AddProduct />} />
-        <Route path="/product" element={<GetProductById />} />
-        <Route path="/product/update/:id" element={<UpdateProduct />} />
-        <Route path="/cart" element={<Cart />} />
-      </Routes>
-      <Footer />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Navbar />
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/product" element={<GetProductById />} />
+          <Route path="/cart" element={<Cart />} />
+
+          {/* Protected Routes */}
+
+          <Route
+            path="/product/:id"
+            element={
+              <ProtectedRoute>
+                <Product />
+              </ProtectedRoute>
+            }
+          />
+  
+          <Route
+            path="/products/add"
+            element={
+              <ProtectedRoute>
+                <AddProduct />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/products/update/:id"
+            element={
+              <ProtectedRoute>
+                <UpdateProduct />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+        <Footer />
+      </Suspense>
     </>
   );
 };
 
 export default App;
- 
