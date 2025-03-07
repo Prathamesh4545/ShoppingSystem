@@ -20,7 +20,7 @@ import com.prathamesh.ShoppingBackend.model.Product;
 import com.prathamesh.ShoppingBackend.service.ProductService;
 
 @RestController
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api")
 public class ProductController {
 

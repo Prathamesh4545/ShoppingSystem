@@ -30,28 +30,61 @@ public class ProductService {
     }
 
     public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
+        validateImageFile(imageFile);
+
+        // Set image details
         product.setImageData(imageFile.getBytes());
         product.setImageName(imageFile.getOriginalFilename());
         product.setImageType(imageFile.getContentType());
+
         return productRepo.save(product);
 
     }
 
     public Product updateProduct(int id, Product product, MultipartFile imageFile) throws IOException {
-        product.setImageData(imageFile.getBytes());
-        product.setImageName(imageFile.getOriginalFilename());
-        product.setImageType(imageFile.getContentType());
-        return productRepo.save(product);
+        Product existingProduct = getProductById(id); // Throws ResourceNotFoundException if not found
+
+        // Update fields
+        existingProduct.setProductName(product.getProductName());
+        existingProduct.setDesc(product.getDesc());
+        existingProduct.setPrice(product.getPrice());
+
+        // Update image if a new file is provided
+        if (imageFile != null && !imageFile.isEmpty()) {
+            validateImageFile(imageFile);
+            existingProduct.setImageData(imageFile.getBytes());
+            existingProduct.setImageName(imageFile.getOriginalFilename());
+            existingProduct.setImageType(imageFile.getContentType());
+        }
+
+        return productRepo.save(existingProduct);
     }
 
     public void deleteProduct(int id) {
-        productRepo.deleteById(id);
+        Product product = getProductById(id); // Throws ResourceNotFoundException if not found
+        productRepo.delete(product);
     }
 
     public List<Product> searchProduct(String searchField, String searchQuery) {
-        
         return productRepo.searchProducts(searchField, searchQuery);
     }
 
+    private void validateImageFile(MultipartFile imageFile) throws IOException {
+        if (imageFile == null || imageFile.isEmpty()) {
+            throw new IOException("Image file is required.");
+        }
+
+        // Validate file type
+        String contentType = imageFile.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IOException("Invalid file type. Only images are allowed.");
+        }
+
+        // Validate file size (e.g., 5MB limit)
+        long maxFileSize = 5 * 1024 * 1024; // 5MB
+        if (imageFile.getSize() > maxFileSize) {
+            throw new IOException("File size exceeds the maximum limit of 5MB.");
+        }
+    }
 
 }
