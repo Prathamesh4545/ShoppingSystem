@@ -15,12 +15,12 @@ export const AuthProvider = ({ children }) => {
   // Check for an existing token and user data on app load
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const storedUser  = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('user');
 
-    if (token && storedUser ) {
-      const parsedUser  = JSON.parse(storedUser );
+    if (token && storedUser) {
+      const parsedUser = JSON.parse(storedUser);
       if (!isTokenExpired(token)) {
-        setUser(parsedUser );
+        setUser(parsedUser);
       } else {
         logout(); // Clear expired token and user data
       }
@@ -33,7 +33,8 @@ export const AuthProvider = ({ children }) => {
       const payload = JSON.parse(atob(token.split('.')[1])); // Decode token payload
       return payload.exp * 1000 < Date.now(); // Check expiry time
     } catch (error) {
-      return true;
+      console.error("Error decoding token:", error);
+      return true; // Treat invalid tokens as expired
     }
   };
 
@@ -81,12 +82,13 @@ export const AuthProvider = ({ children }) => {
         saveUserData(user, token);
         setSuccessMessage('Login successful!');
         setUser(user);
-        navigate('/'); // Redirect to a protected route after login
+        navigate('/'); // Redirect to home page after login
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Invalid userName or password.');
+        setError(errorData.message || 'Invalid username or password.');
       }
     } catch (error) {
+      console.error("Login error:", error);
       setError('An unexpected error occurred during login.');
     } finally {
       setIsLoading(false);
@@ -97,7 +99,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     setUser(null);
     clearUserData();
-    navigate('/');
+    navigate('/'); // Redirect to home page after logout
   }, [navigate]);
 
   // Auto-clear error and success messages

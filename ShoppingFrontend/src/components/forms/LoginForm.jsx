@@ -91,15 +91,11 @@ const LoginPage = ({ showLoginModal, onClose, onSwitchToRegister }) => {
     <Modal show={showLoginModal} size="md" onClose={onClose} popup>
       <Modal.Header className="border-b border-gray-200 p-4">
         {user ? (
-          <h2 className="text-xl font-semibold text-gray-800">Your Profile</h2>
+          <div className="text-xl font-semibold text-gray-800">Your Profile</div>
         ) : loginStatus === LOGIN_STATUS.SUCCESS ? (
-          <h3 className="text-xl font-semibold text-gray-800">
-            Login Successful!
-          </h3>
+          <div className="text-xl font-semibold text-gray-800">Login Successful!</div>
         ) : (
-          <h3 className="text-xl font-semibold text-gray-800">
-            Login to your account
-          </h3>
+          <div className="text-xl font-semibold text-gray-800">Login to your account</div>
         )}
       </Modal.Header>
 
