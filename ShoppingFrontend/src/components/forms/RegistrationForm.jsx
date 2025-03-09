@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Label, TextInput, Button } from "flowbite-react";
+import { Modal, Label, TextInput, Button, Spinner } from "flowbite-react";
 
 const RegistrationForm = ({ showRegistrationModal, onClose }) => {
   const [formData, setFormData] = useState({
@@ -27,6 +27,18 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
     // Validate First Name
     if (!formData.firstName.trim()) {
       newErrors.firstName = "First name is required.";
+    }
+
+    // Validate Last Name
+    if (formData.lastName.trim() && !/^[a-zA-Z\s'-]+$/.test(formData.lastName)) {
+      newErrors.lastName = "Last name contains invalid characters.";
+    }
+
+    // Validate Username
+    if (!formData.userName.trim()) {
+      newErrors.userName = "Username is required.";
+    } else if (!/^[a-zA-Z0-9_]{4,20}$/.test(formData.userName)) {
+      newErrors.userName = "Username must be 4-20 characters long and can only contain letters, numbers, and underscores.";
     }
 
     // Validate Email
@@ -91,7 +103,7 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
 
       // Show success message
       setMessage("Registration successful! You can now log in.");
-      
+
       // Clear form data and close modal after success
       setFormData({
         firstName: "",
@@ -102,11 +114,11 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
         confirmPassword: "",
         phoneNumber: "",
       });
-      
+
       setTimeout(onClose, 2000); // Close modal after 2 seconds
 
     } catch (error) {
-      setErrors({ submit: error.message });
+      setErrors({ submit: error.message || "Network error. Please check your connection and try again." });
     } finally {
       setIsLoading(false);
     }
@@ -121,6 +133,20 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
             Create a new account
           </h3>
 
+          {/* Global Success Message */}
+          {message && (
+            <div className="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 dark:bg-gray-800 dark:text-green-400">
+              {message}
+            </div>
+          )}
+
+          {/* Global Submit Error Message */}
+          {errors.submit && (
+            <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400">
+              {errors.submit}
+            </div>
+          )}
+
           {/* First Name */}
           <div>
             <Label htmlFor="firstName" value="First Name" />
@@ -132,9 +158,12 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               placeholder="John"
               required
               disabled={isLoading}
+              aria-describedby="firstNameError"
             />
             {errors.firstName && (
-              <p className="text-red-500 text-sm">{errors.firstName}</p>
+              <p id="firstNameError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.firstName}
+              </p>
             )}
           </div>
 
@@ -148,7 +177,13 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               onChange={handleChange}
               placeholder="Doe"
               disabled={isLoading}
+              aria-describedby="lastNameError"
             />
+            {errors.lastName && (
+              <p id="lastNameError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.lastName}
+              </p>
+            )}
           </div>
 
           {/* Username */}
@@ -162,7 +197,13 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               placeholder="johndoe123"
               required
               disabled={isLoading}
+              aria-describedby="userNameError"
             />
+            {errors.userName && (
+              <p id="userNameError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.userName}
+              </p>
+            )}
           </div>
 
           {/* Email */}
@@ -177,8 +218,13 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               placeholder="name@company.com"
               required
               disabled={isLoading}
+              aria-describedby="emailError"
             />
-            {errors.email && <p className="text-red-500 text-sm">{errors.email}</p>}
+            {errors.email && (
+              <p id="emailError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.email}
+              </p>
+            )}
           </div>
 
           {/* Password */}
@@ -193,8 +239,13 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               placeholder="••••••••"
               required
               disabled={isLoading}
+              aria-describedby="passwordError"
             />
-            {errors.password && <p className="text-red-500 text-sm">{errors.password}</p>}
+            {errors.password && (
+              <p id="passwordError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.password}
+              </p>
+            )}
           </div>
 
           {/* Confirm Password */}
@@ -209,9 +260,12 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               placeholder="••••••••"
               required
               disabled={isLoading}
+              aria-describedby="confirmPasswordError"
             />
             {errors.confirmPassword && (
-              <p className="text-red-500 text-sm">{errors.confirmPassword}</p>
+              <p id="confirmPasswordError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 
@@ -226,22 +280,31 @@ const RegistrationForm = ({ showRegistrationModal, onClose }) => {
               placeholder="+1234567890"
               required
               disabled={isLoading}
+              aria-describedby="phoneNumberError"
             />
             {errors.phoneNumber && (
-              <p className="text-red-500 text-sm">{errors.phoneNumber}</p>
+              <p id="phoneNumberError" className="mt-2 text-sm text-red-600 dark:text-red-500">
+                {errors.phoneNumber}
+              </p>
             )}
           </div>
 
-          {/* Submit Button */}
-          <div className="w-full">
+          {/* Submit and Cancel Buttons */}
+          <div className="flex justify-between">
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+              {isLoading ? (
+                <>
+                  <Spinner aria-label="Loading" size="sm" />
+                  <span className="pl-3">Creating account...</span>
+                </>
+              ) : (
+                "Create account"
+              )}
+            </Button>
+            <Button color="gray" onClick={onClose} disabled={isLoading}>
+              Cancel
             </Button>
           </div>
-
-          {/* Success/Submit Error Messages */}
-          {message && <p className="text-green-500 text-sm">{message}</p>}
-          {errors.submit && <p className="text-red-500 text-sm">{errors.submit}</p>}
         </form>
       </Modal.Body>
     </Modal>

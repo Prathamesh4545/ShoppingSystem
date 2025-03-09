@@ -1,30 +1,27 @@
 package com.prathamesh.ShoppingBackend.controller;
 
-import java.util.List;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import com.prathamesh.ShoppingBackend.model.Product;
 import com.prathamesh.ShoppingBackend.service.ProductService;
+
+import java.io.*;
+
+import com.prathamesh.ShoppingBackend.Exception.ResourceNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @CrossOrigin(origins = "http://localhost:5173")
 @RequestMapping("/api")
 public class ProductController {
 
-    private ProductService productService;
+    private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
+    private final ProductService productService;
 
     public ProductController(ProductService productService) {
         this.productService = productService;
@@ -32,56 +29,60 @@ public class ProductController {
 
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getAllProducts() {
-        return new ResponseEntity<>(productService.getAllProducts(), HttpStatus.OK);
+        logger.info("Fetching all products");
+        List<Product> products = productService.getAllProducts();
+        return new ResponseEntity<>(products, HttpStatus.OK);
     }
 
     @GetMapping("/product/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable int id) {
-        Product product = productService.getProductById(id);
-
-        if (product != null) {
+        logger.info("Fetching product with ID: {}", id);
+        try {
+            Product product = productService.getProductById(id);
             return new ResponseEntity<>(product, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(product, HttpStatus.NOT_FOUND);
+        } catch (ResourceNotFoundException e) {
+            logger.error("Product not found with ID: {}", id, e);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
     @PostMapping("/product")
-    public ResponseEntity<Product> addProduct(@RequestPart Product product, @RequestPart MultipartFile imageFile) {
-        try {
-            Product product1 = productService.addProduct(product, imageFile);
-            return new ResponseEntity<>(product1, HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(product, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<Product> createProduct(
+            @RequestPart("product") Product product,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) throws IOException {
+        System.out.println("Product: " + product);
+        if (images != null) {
+            System.out.println("Number of images: " + images.size());
+        } else {
+            System.out.println("No images provided");
         }
+        Product savedProduct = productService.saveProduct(product, images);
+        return ResponseEntity.ok(savedProduct);
     }
 
+    
+
     @PutMapping("/product/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable int id, @RequestPart Product product,
-            @RequestPart MultipartFile imageFile) {
-        try {
-            Product product1 = productService.updateProduct(id, product, imageFile);
-            if (product1 != null) {
-                return new ResponseEntity<>(product1, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(product1, HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(product, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable int id,
+            @RequestPart("product") Product product,
+            @RequestPart("images") List<MultipartFile> images) throws IOException {
+        product.setId(id); // Ensure the ID is set
+        Product updatedProduct = productService.updateProduct(product, images);
+        return ResponseEntity.ok(updatedProduct);
     }
 
     @DeleteMapping("/product/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable int id) {
+        logger.info("Deleting product with ID: {}", id);
         try {
-            Product product1 = productService.getProductById(id);
-            if (product1 != null) {
-                productService.deleteProduct(id);
-                return new ResponseEntity<>("Product deleted successfully", HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
-            }
+            productService.deleteProduct(id);
+            return new ResponseEntity<>("Product deleted successfully", HttpStatus.OK);
+        } catch (ResourceNotFoundException e) {
+            logger.error("Product not found with ID: {}", id);
+            return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+            logger.error("Error deleting product with ID: {}", id, e);
             return new ResponseEntity<>("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -90,18 +91,17 @@ public class ProductController {
     public ResponseEntity<List<Product>> searchProducts(
             @RequestParam String searchField,
             @RequestParam String searchQuery) {
+        logger.info("Searching products with {}: {}", searchField, searchQuery);
+        if (searchField == null || searchQuery == null || searchField.isEmpty() || searchQuery.isEmpty()) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
         try {
-            // Pass the keyword and value to the service layer for filtering
             List<Product> products = productService.searchProduct(searchField, searchQuery);
-
-            if (products != null && !products.isEmpty()) {
-                return new ResponseEntity<>(products, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
+            return products.isEmpty() ? new ResponseEntity<>(HttpStatus.NOT_FOUND)
+                    : new ResponseEntity<>(products, HttpStatus.OK);
         } catch (Exception e) {
+            logger.error("Error searching products", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
 }

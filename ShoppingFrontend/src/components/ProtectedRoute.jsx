@@ -7,39 +7,27 @@ const ProtectedRoute = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  console.log("ProtectedRoute component rendered.");
-
   useEffect(() => {
-    console.log("Checking authentication...");
+    const checkAuthentication = () => {
+      const token = localStorage.getItem("token");
 
-    const token = localStorage.getItem("token");
+      if (!token || isTokenExpired(token)) {
+        logout();
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+      }
+    };
 
-    if (!token || isTokenExpired(token)) {
-      console.log("Token is invalid or expired. Logging out...");
-      logout();
-      setIsAuthenticated(false);
-    } else {
-      console.log("Token is valid. User is authenticated.");
-      setIsAuthenticated(true);
-    }
-
+    checkAuthentication();
     setIsLoading(false);
   }, [isTokenExpired, logout]);
 
   if (isLoading) {
-    console.log("Loading authentication state...");
     return <div>Loading...</div>;
   }
 
-  console.log("Authentication state:", isAuthenticated);
-
-  if (!isAuthenticated) {
-    console.log("User is not authenticated. Redirecting to login...");
-    return <Navigate to="/login" />;
-  }
-
-  console.log("User is authenticated. Rendering children...");
-  return children; // Render the child components directly
+  return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 export default ProtectedRoute;

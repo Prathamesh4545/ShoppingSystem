@@ -65,7 +65,7 @@ const Product = () => {
           const data = await response.json();
           console.log("Product data fetched:", data);
           setProduct(data); // Set product data
-          setMainImage(data.imageUrl || "#"); // Set main image
+          setMainImage(data.images && data.images.length > 0 ? data.images[0].imageData : "#"); // Set main image
         }
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -87,7 +87,7 @@ const Product = () => {
   // Handle quantity change
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value, 10);
-    setQuantity(value >= 1 ? value : 1);
+    setQuantity(value >= 1 ? value : 1); // Set quantity to a minimum of 1
   };
 
   // Handle add to cart
@@ -131,7 +131,7 @@ const Product = () => {
     console.log("Product not found state.");
     return (
       <div className="flex flex-col items-center justify-center h-screen text-gray-500">
-        <p className="text-lg">Product not found.</p>
+        <p className="text-lg">Product not available.</p>
         <Button onClick={() => navigate("/")} className="mt-4">
           Go Back to Home
         </Button>
@@ -139,34 +139,44 @@ const Product = () => {
     );
   }
 
-  // Product details
-  console.log("Product data:", product);
+  // Handle missing images
+  const renderMainImage = mainImage ? (
+    <img
+      src={`data:${product.images[0]?.imageType || ""};base64,${mainImage}`}
+      alt="Product"
+      className="w-full h-auto rounded-lg shadow-md mb-4"
+    />
+  ) : (
+    <img
+      src="/images/placeholder.webp"
+      alt="Product"
+      className="w-full h-auto rounded-lg shadow-md mb-4"
+    />
+  );
+
   return (
     <div className="pt-20 bg-gray-100">
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-wrap -mx-4">
           {/* Product Images */}
           <div className="w-full md:w-1/2 px-4 mb-8">
-            <img
-              src={mainImage}
-              alt="Product"
-              className="w-full h-auto rounded-lg shadow-md mb-4"
-            />
+            {renderMainImage}
             <div className="flex gap-4 py-4 justify-center overflow-x-auto">
-              {[
-                "https://images.unsplash.com/photo-1505751171710-1f6d0ace5a85?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzEyNjZ8MHwxfHNlYXJjaHwxMnx8aGVhZHBob25lfGVufDB8MHx8fDE3MjEzMDM2OTB8MA&ixlib=rb-4.0.3&q=80&w=1080",
-                "https://images.unsplash.com/photo-1484704849700-f032a568e944?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzEyNjZ8MHwxfHNlYXJjaHw0fHxoZWFkcGhvbmV8ZW58MHwwfHx8MTcyMTMwMzY5MHww&ixlib=rb-4.0.3&q=80&w=1080",
-                "https://images.unsplash.com/photo-1496957961599-e35b69ef5d7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzEyNjZ8MHwxfHNlYXJjaHw4fHxoZWFkcGhvbmV8ZW58MHwwfHx8MTcyMTMwMzY5MHww&ixlib=rb-4.0.3&q=80&w=1080",
-                "https://images.unsplash.com/photo-1528148343865-51218c4a13e6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzEyNjZ8MHwxfHNlYXJjaHwzfHxoZWFkcGhvbmV8ZW58MHwwfHx8MTcyMTMwMzY5MHww&ixlib=rb-4.0.3&q=80&w=1080",
-              ].map((imageUrl, index) => (
-                <img
-                  key={index}
-                  src={imageUrl}
-                  alt={`Thumbnail ${index + 1}`}
-                  className="size-16 sm:size-20 object-cover rounded-md cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
-                  onClick={() => handleImageChange(imageUrl)}
-                />
-              ))}
+              {product.images && product.images.length > 0 ? (
+                product.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={`data:${image.imageType};base64,${image.imageData}`}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="size-16 sm:size-20 object-cover rounded-md cursor-pointer opacity-60 hover:opacity-100 transition duration-300"
+                    onClick={() =>
+                      handleImageChange(image.imageData)
+                    }
+                  />
+                ))
+              ) : (
+                <span className="text-gray-500">No images available</span>
+              )}
             </div>
           </div>
 
@@ -176,7 +186,9 @@ const Product = () => {
             <p className="text-gray-600 mb-4">SKU: {product.sku || "N/A"}</p>
             <div className="mb-4">
               <span className="text-2xl font-bold mr-2">${product.price}</span>
-              <span className="text-gray-500 line-through">${product.originalPrice || "N/A"}</span>
+              <span className="text-gray-500 line-through">
+                ${product.originalPrice || "N/A"}
+              </span>
             </div>
             <div className="flex items-center mb-4">
               {[...Array(5)].map((_, index) => (
@@ -208,7 +220,10 @@ const Product = () => {
             </div>
 
             <div className="mb-6">
-              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="quantity"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Quantity:
               </label>
               <input
@@ -216,10 +231,16 @@ const Product = () => {
                 id="quantity"
                 name="quantity"
                 min="1"
+                max={product.stockQuantity} // Max quantity based on stock
                 value={quantity}
                 onChange={handleQuantityChange}
                 className="w-12 text-center rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               />
+              {quantity > product.stockQuantity && (
+                <p className="text-sm text-red-500 mt-1">
+                  Not enough stock available
+                </p>
+              )}
             </div>
 
             <div className="flex space-x-4 mb-6">
@@ -264,16 +285,6 @@ const Product = () => {
                 Wishlist
               </button>
             </div>
-
-            {/* Future update */}
-            {/* <div>
-              <h3 className="text-lg font-semibold mb-2">Key Features:</h3>
-              <ul className="list-disc list-inside text-gray-700">
-                {product.features?.map((feature, index) => (
-                  <li key={index}>{feature}</li>
-                ))}
-              </ul>
-            </div> */}
           </div>
         </div>
       </div>

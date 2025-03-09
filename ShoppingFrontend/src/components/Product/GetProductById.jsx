@@ -19,7 +19,7 @@ const GetProductById = () => {
     setLoading(true);
     try {
       await axios.delete(`http://localhost:8080/api/product/${id}`);
-      window.location.reload();
+      // Optimizing page update without reloading
       setSearchQuery("");
     } catch (error) {
       setError(`Failed to delete the product: ${error.message}`);
@@ -58,90 +58,53 @@ const GetProductById = () => {
           <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
               <tr>
-                <th scope="col" className="px-6 py-3">
-                  Index
-                </th>
-                <th scope="col" className="px-16 py-3">
-                  Image
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Name
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Brand
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Description
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Categories
-                </th>
-                <th scope="col" className="px-9 py-3">
-                  Release Date
-                </th>
-                <th scope="col" className=" px-6 py-3">
-                  Quantity
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Price
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Action
-                </th>
+                <th scope="col" className="px-6 py-3">Index</th>
+                <th scope="col" className="px-16 py-3">Image</th>
+                <th scope="col" className="px-6 py-3">Name</th>
+                <th scope="col" className="px-6 py-3">Brand</th>
+                <th scope="col" className="px-6 py-3">Description</th>
+                <th scope="col" className="px-6 py-3">Categories</th>
+                <th scope="col" className="px-9 py-3">Release Date</th>
+                <th scope="col" className="px-6 py-3">Quantity</th>
+                <th scope="col" className="px-6 py-3">Price</th>
+                <th scope="col" className="px-6 py-3">Action</th>
               </tr>
             </thead>
             <tbody>
               {products.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan="10"
-                    className="px-6 py-4 text-center text-gray-500 dark:text-gray-400"
-                  >
+                  <td colSpan="10" className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                     No products found.
                   </td>
                 </tr>
               ) : (
                 products.map((product, index) => (
-                  <tr
-                    key={index}
-                    className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
-                  >
+                  <tr key={index} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                     <td className="px-6 py-4">{index + 1}</td>
                     <td className="p-4">
                       <img
-                        src={`data:image/jpeg;base64,${product.imageData}`}
+                        src={
+                          product.images && product.images.length > 0
+                            ? `data:${product.images[0].imageType};base64,${product.images[0].imageData}`
+                            : "/images/placeholder.webp"
+                        }
                         alt={product.productName}
                         className="w-16 md:w-32 max-w-full max-h-full"
                       />
                     </td>
+                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{product.productName}</td>
+                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{product.brand}</td>
                     <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                      {product.productName}
+                      <p className="text-gray-500 dark:text-gray-400">{product.desc}</p>
                     </td>
+                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{product.category}</td>
                     <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                      {product.brand}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                      <p className="text-gray-500 dark:text-gray-400">
-                        {product.desc}
-                      </p>
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                      {product.category}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                      {product.releaseDate
-                        ? product.releaseDate.substring(0, 10)
-                        : "N/A"}
+                      {product.releaseDate ? product.releaseDate.substring(0, 10) : "N/A"}
                     </td>
                     <td className="px-6 py-4">{product.quantity}</td>
-                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">
-                      {product.price}
-                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-900 dark:text-white">{product.price}</td>
                     <td className="px-6 py-4">
-                      <Link
-                        to={`/product/update/${product.id}`}
-                        className="font-medium m-2 text-red-600 dark:text-red-500 hover:underline cursor-pointer"
-                      >
+                      <Link to={`/product/update/${product.id}`} className="font-medium m-2 text-red-600 dark:text-red-500 hover:underline cursor-pointer">
                         Edit
                       </Link>
                       <a

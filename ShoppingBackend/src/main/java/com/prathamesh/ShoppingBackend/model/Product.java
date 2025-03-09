@@ -2,12 +2,11 @@ package com.prathamesh.ShoppingBackend.model;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,6 +20,7 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
+
     private String productName;
     private String brand;
     private String desc;
@@ -30,9 +30,8 @@ public class Product {
     private int quantity;
     private BigDecimal price;
 
-    private String imageName;
-    private String imageType;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference // Marks the "forward" part of the reference
+    private List<ProductImage> images;
 
-    @Lob
-    private byte[] imageData;
 }

@@ -1,24 +1,32 @@
 package com.prathamesh.ShoppingBackend.service;
 
+import com.prathamesh.ShoppingBackend.Exception.ResourceNotFoundException;
+import com.prathamesh.ShoppingBackend.model.Product;
+import com.prathamesh.ShoppingBackend.model.ProductImage;
+import com.prathamesh.ShoppingBackend.repository.ProductRepo;
+import com.prathamesh.ShoppingBackend.repository.ProductImageRepository;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.prathamesh.ShoppingBackend.model.Product;
-import com.prathamesh.ShoppingBackend.repository.ProductRepo;
-
 @Service
 public class ProductService {
 
-    private ProductRepo productRepo;
+    private final ProductRepo productRepo;
 
-    public ProductService(ProductRepo productRepo) {
+    private ProductImageRepository productImageRepository;
+
+    private static final long MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+    public ProductService(ProductRepo productRepo, ProductImageRepository productImageRepository) {
         this.productRepo = productRepo;
+        this.productImageRepository = productImageRepository;
     }
 
     public List<Product> getAllProducts() {
@@ -26,47 +34,86 @@ public class ProductService {
     }
 
     public Product getProductById(int id) {
-        return productRepo.findById(id).orElse(null);
+        return productRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
-    public Product addProduct(Product product, MultipartFile imageFile) throws IOException {
-        validateImageFile(imageFile);
-
-        // Set image details
-        product.setImageData(imageFile.getBytes());
-        product.setImageName(imageFile.getOriginalFilename());
-        product.setImageType(imageFile.getContentType());
-
-        return productRepo.save(product);
-
-    }
-
-    public Product updateProduct(int id, Product product, MultipartFile imageFile) throws IOException {
-        Product existingProduct = getProductById(id); // Throws ResourceNotFoundException if not found
-
-        // Update fields
-        existingProduct.setProductName(product.getProductName());
-        existingProduct.setDesc(product.getDesc());
-        existingProduct.setPrice(product.getPrice());
-
-        // Update image if a new file is provided
-        if (imageFile != null && !imageFile.isEmpty()) {
-            validateImageFile(imageFile);
-            existingProduct.setImageData(imageFile.getBytes());
-            existingProduct.setImageName(imageFile.getOriginalFilename());
-            existingProduct.setImageType(imageFile.getContentType());
+    @Transactional
+    public Product saveProduct(Product product, List<MultipartFile> imageFiles) throws IOException {
+        // Save the product first
+        Product savedProduct = productRepo.save(product);
+    
+        // Save the associated images (if present)
+        if (imageFiles != null && !imageFiles.isEmpty()) {
+            for (MultipartFile file : imageFiles) {
+                // Validate file size
+                if (file.getSize() > MAX_FILE_SIZE) {
+                    throw new IllegalArgumentException("File size exceeds the limit of 20MB: " + file.getOriginalFilename());
+                }
+    
+                // Create and save the image entity
+                ProductImage image = new ProductImage();
+                image.setImageName(file.getOriginalFilename());
+                image.setImageType(file.getContentType());
+                image.setImageData(file.getBytes());
+                image.setProduct(savedProduct);
+    
+                productImageRepository.save(image);
+            }
         }
-
-        return productRepo.save(existingProduct);
+    
+        return savedProduct;
     }
 
+    @Transactional
+    public Product updateProduct(Product product, List<MultipartFile> imageFiles) throws IOException {
+        // Check if the product exists
+        Optional<Product> existingProduct = productRepo.findById(product.getId());
+        if (existingProduct.isPresent()) {
+            // Update the product
+            Product updatedProduct = productRepo.save(product);
+
+            // Update the associated images
+            if (imageFiles != null && !imageFiles.isEmpty()) {
+                // Delete existing images
+                productImageRepository.deleteByProductId(product.getId());
+
+                // Save new images
+                for (MultipartFile file : imageFiles) {
+                    // Validate file size
+                    if (file.getSize() > MAX_FILE_SIZE) {
+                        throw new IllegalArgumentException(
+                                "File size exceeds the limit of 20MB: " + file.getOriginalFilename());
+                    }
+
+                    // Create and save the image entity
+                    ProductImage image = new ProductImage();
+                    image.setImageName(file.getOriginalFilename());
+                    image.setImageType(file.getContentType());
+                    image.setImageData(file.getBytes());
+                    image.setProduct(updatedProduct);
+
+                    productImageRepository.save(image);
+                }
+            }
+
+            return updatedProduct;
+        } else {
+            throw new RuntimeException("Product not found with ID: " + product.getId());
+        }
+    }
+
+    @Transactional
     public void deleteProduct(int id) {
-        Product product = getProductById(id); // Throws ResourceNotFoundException if not found
+        Product product = getProductById(id);
         productRepo.delete(product);
     }
 
     public List<Product> searchProduct(String searchField, String searchQuery) {
-        return productRepo.searchProducts(searchField, searchQuery);
+        if (searchField == null || searchQuery == null || searchField.isEmpty() || searchQuery.isEmpty()) {
+            throw new IllegalArgumentException("Search field and query must not be empty");
+        }
+        return productRepo.searchProduct(searchField, searchQuery);
     }
 
     private void validateImageFile(MultipartFile imageFile) throws IOException {
@@ -80,11 +127,10 @@ public class ProductService {
             throw new IOException("Invalid file type. Only images are allowed.");
         }
 
-        // Validate file size (e.g., 5MB limit)
-        long maxFileSize = 5 * 1024 * 1024; // 5MB
+        // Validate file size (limit to 20MB)
+        long maxFileSize = 20 * 1024 * 1024; // 20MB
         if (imageFile.getSize() > maxFileSize) {
             throw new IOException("File size exceeds the maximum limit of 5MB.");
         }
     }
-
 }

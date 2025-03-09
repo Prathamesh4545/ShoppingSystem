@@ -5,6 +5,7 @@ import Footer from "./components/common/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import Contact from "./components/Contact";
+import GetProductById from "./components/Product/GetProductById"
 
 // Lazy loading components
 const Home = React.lazy(() => import("./components/Home"));
@@ -23,6 +24,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/contact" element = {<Contact/>} />
+          <Route path="/products" element = {<GetProductById/>} />
 
           {/* Protected Routes */}
           <Route

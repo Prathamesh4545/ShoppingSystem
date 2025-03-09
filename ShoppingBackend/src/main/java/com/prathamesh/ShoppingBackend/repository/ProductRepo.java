@@ -9,10 +9,13 @@ import org.springframework.stereotype.Repository;
 import com.prathamesh.ShoppingBackend.model.Product;
 
 @Repository
-public interface ProductRepo extends JpaRepository<Product, Integer>{
+public interface ProductRepo extends JpaRepository<Product, Integer> {
 
-    @Query("select p from Product p where "+
-    "LOWER(:searchField) Like LOWER(CONCAT('%', :searchQuery, '%'))")
-List<Product> searchProducts(String searchField, String searchQuery);
+    @Query("SELECT p FROM Product p WHERE " +
+           "LOWER(p.productName) LIKE LOWER(CONCAT('%', :searchQuery, '%')) OR " +
+           "LOWER(p.brand) LIKE LOWER(CONCAT('%', :searchQuery, '%')) OR " +
+           "LOWER(p.category) LIKE LOWER(CONCAT('%', :searchQuery, '%'))")
+    List<Product> searchProduct(String searchField, String searchQuery);
 
+    List<Product> findByProductNameContainingOrDescContaining(String searchQuery, String searchQuery2);
 }
