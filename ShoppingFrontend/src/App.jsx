@@ -5,13 +5,15 @@ import Footer from "./components/common/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import Contact from "./components/Contact";
-import GetProductById from "./components/Product/GetProductById"
+import GetProductById from "./components/Product/GetProductById";
 
 // Lazy loading components
 const Home = React.lazy(() => import("./components/Home"));
 const Product = React.lazy(() => import("./components/Product/Product"));
 const AddProduct = React.lazy(() => import("./components/Product/AddProduct"));
-const UpdateProduct = React.lazy(() => import("./components/Product/UpdateProduct"));
+const UpdateProduct = React.lazy(() =>
+  import("./components/Product/UpdateProduct")
+);
 const Cart = React.lazy(() => import("./components/Cart"));
 
 const App = () => {
@@ -23,8 +25,8 @@ const App = () => {
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/contact" element = {<Contact/>} />
-          <Route path="/products" element = {<GetProductById/>} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/products" element={<GetProductById />} />
 
           {/* Protected Routes */}
           <Route
@@ -44,7 +46,7 @@ const App = () => {
             }
           />
           <Route
-            path="/products/update/:id"
+            path="/product/update/:id"
             element={
               <ProtectedRoute>
                 <UpdateProduct />

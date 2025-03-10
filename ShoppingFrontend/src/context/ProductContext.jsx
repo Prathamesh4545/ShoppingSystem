@@ -62,6 +62,7 @@ const ProductContext = ({ children }) => {
 
   const contextValue = useMemo(() => ({
     products: filteredProducts,
+    setProducts, // Expose setProducts to context
     isLoading,
     error,
     getAllProducts,

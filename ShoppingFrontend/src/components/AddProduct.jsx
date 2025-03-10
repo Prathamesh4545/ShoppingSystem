@@ -1,80 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
 
 const AddProduct = () => {
   const [formData, setFormData] = useState({
     productName: "",
     brand: "",
     category: "",
+    imageName: "",
+    imageType: "",
+    image: null,
     releaseDate: "",
-    quantity: 1, // Default to 1 to avoid validation issues
-    price: 0.01, // Default to 0.01 to avoid validation issues
+    quantity: 0,
+    price: 0,
     desc: "",
     available: false,
   });
-  const [images, setImages] = useState([]); // Array to hold multiple images
-  const [imagePreviews, setImagePreviews] = useState([]); // Array to hold image previews
-  const [isLoading, setIsLoading] = useState(false);
-
-  const navigate = useNavigate();
-  const { isTokenExpired, logout } = useAuth();
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-
-    if (!token || isTokenExpired(token)) {
-      logout();
-      navigate("/");
-    }
-  }, [navigate, logout, isTokenExpired]);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
       ...prevData,
       [name]: value,
-      available: name === "quantity" ? parseInt(value) > 0 : prevData.available,
     }));
   };
 
   const handleImageChange = (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
-    const newImages = [];
-    const newPreviews = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-
-      if (!allowedTypes.includes(file.type)) {
-        toast.error(
-          `File ${file.name} is not a valid image type (JPEG, PNG, GIF).`
-        );
-        continue;
-      }
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`File ${file.name} exceeds the 20MB size limit.`);
-        continue;
-      }
-
-      newImages.push(file);
-      newPreviews.push(URL.createObjectURL(file));
-    }
-
-    setImages((prevImages) => [...prevImages, ...newImages]);
-    setImagePreviews((prevPreviews) => [...prevPreviews, ...newPreviews]);
+    const file = e.target.files[0];
+    setFormData((prevData) => ({
+      ...prevData,
+      image: file,
+      imageName: file.name,
+      imageType: file.type,
+    }));
+    setImagePreview(URL.createObjectURL(file));
   };
 
-  const removeImage = (index) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
-    setImagePreviews((prevPreviews) =>
-      prevPreviews.filter((_, i) => i !== index)
-    );
+  const handleQuantityChange = (e) => {
+    const value = e.target.value;
+    setFormData((prevData) => ({
+      ...prevData,
+      quantity: value,
+      available: parseInt(value) > 0,
+    }));
   };
 
   const resetForm = () => {
@@ -82,116 +51,114 @@ const AddProduct = () => {
       productName: "",
       brand: "",
       category: "",
+      imageName: "",
+      imageType: "",
+      image: null,
       releaseDate: "",
-      quantity: 1, // Reset to 1
-      price: 0.01, // Reset to 0.01
+      quantity: 0,
+      price: 0,
       desc: "",
       available: false,
     });
-    setImages([]);
-    setImagePreviews([]);
+    setImagePreview(null);
   };
 
   const validateForm = () => {
     const { productName, brand, category, price, quantity, releaseDate } =
       formData;
-
-    if (!productName) {
-      toast.error("Product name is required.");
+    if (
+      !productName ||
+      !brand ||
+      !category ||
+      !price ||
+      !quantity ||
+      !releaseDate
+    ) {
+      toast.error("Please fill in all the required fields.", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
       return false;
     }
-    if (!brand) {
-      toast.error("Brand is required.");
-      return false;
-    }
-    if (!category) {
-      toast.error("Category is required.");
-      return false;
-    }
-    if (!releaseDate) {
-      toast.error("Release date is required.");
-      return false;
-    }
-    if (price <= 0) {
-      toast.error("Price must be greater than 0.");
-      return false;
-    }
-    if (quantity <= 0) {
-      toast.error("Quantity must be greater than 0.");
-      return false;
-    }
-    if (images.length === 0) {
-      toast.error("At least one product image is required.");
-      return false;
-    }
-
     return true;
   };
 
   const onSubmitHandler = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    const {
+      productName,
+      brand,
+      category,
+      price,
+      quantity,
+      releaseDate,
+      desc,
+      available,
+      image,
+    } = formData;
+
+    const product = {
+      productName,
+      brand,
+      category,
+      price,
+      quantity,
+      releaseDate,
+      desc,
+      available,
+    };
 
     const formDataToSend = new FormData();
     formDataToSend.append(
       "product",
-      new Blob([JSON.stringify(formData)], { type: "application/json" })
+      new Blob([JSON.stringify(product)], { type: "application/json" })
     );
-
-    images.forEach((image) => {
-      formDataToSend.append("images", image); // Use "images" to match backend
-    });
-
-    // Log the FormData being sent
-    for (let [key, value] of formDataToSend.entries()) {
-      console.log(key, value);
-    }
+    formDataToSend.append("imageFile", image);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await axios.post(
-        `http://localhost:8080/api/product`,
-        formDataToSend,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Log the response from the backend
-      console.log("Response from backend:", response.data);
-
-      // Display uploaded images
-      if (response.data.imageUrls) {
-        toast.success("Product and images uploaded successfully!");
-        setImagePreviews(response.data.imageUrls);
-      } else {
-        toast.success("Product uploaded successfully.");
-      }
+      await axios.post("http://localhost:8080/api/product", formDataToSend, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       resetForm();
+      toast.success("Product added successfully!", {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     } catch (error) {
-      console.error("Error adding product:", error);
-      if (error.response?.status === 401) {
-        toast.error("Session expired. Please log in again.");
-        logout();
-        navigate("/");
-      } else {
-        toast.error(error?.response?.data?.message || "Error adding product!");
-      }
-    } finally {
-      setIsLoading(false);
+      toast.error(error?.response?.data?.message || `Error adding product!`, {
+        position: "top-right",
+        autoClose: 5000,
+        hideProgressBar: true,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
     }
   };
 
   return (
     <>
-      <ToastContainer />
-      <div className="pt-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-slate-100 rounded">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-slate-100 rounded">
         <form
           className="space-y-8 divide-y divide-gray-200"
           onSubmit={onSubmitHandler}
@@ -201,10 +168,9 @@ const AddProduct = () => {
               Add Products
             </h2>
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-              {/* Product Name */}
               <div className="sm:col-span-3">
                 <label
-                  htmlFor="productName"
+                  htmlFor="name"
                   className="block text-sm/6 font-medium text-gray-900"
                 >
                   Name
@@ -221,7 +187,6 @@ const AddProduct = () => {
                 </div>
               </div>
 
-              {/* Brand */}
               <div className="sm:col-span-3">
                 <label
                   htmlFor="brand"
@@ -241,7 +206,6 @@ const AddProduct = () => {
                 </div>
               </div>
 
-              {/* Category */}
               <div className="sm:col-span-3">
                 <label
                   htmlFor="category"
@@ -261,49 +225,36 @@ const AddProduct = () => {
                 </div>
               </div>
 
-              {/* Image Upload */}
               <div className="sm:col-span-3">
                 <label
                   className="block mb-2 text-sm font-medium text-gray-900"
-                  htmlFor="images"
+                  htmlFor="user_avatar"
                 >
-                  Product Images
+                  Product Image
                 </label>
                 <div className="mt-2">
                   <input
                     onChange={handleImageChange}
-                    name="images"
-                    id="images"
-                    type="file"
-                    multiple
+                    name="image"
                     className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer"
+                    id="user_avatar"
+                    type="file"
                   />
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          className="w-24 h-24 object-cover rounded-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-                          aria-label="Remove image"
-                        >
-                          &times;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  {imagePreview && (
+                    <div className="mt-2">
+                      <img
+                        src={imagePreview}
+                        alt="Product Preview"
+                        className="w-32 h-32 object-cover rounded-md"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Release Date */}
               <div className="sm:col-span-2 sm:col-start-1">
                 <label
-                  htmlFor="releaseDate"
+                  htmlFor="release-date"
                   className="block text-sm/6 font-medium text-gray-900"
                 >
                   Release Date
@@ -314,13 +265,12 @@ const AddProduct = () => {
                     onChange={handleChange}
                     type="date"
                     name="releaseDate"
-                    id="releaseDate"
+                    id="release-date"
                     className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900"
                   />
                 </div>
               </div>
 
-              {/* Quantity */}
               <div className="sm:col-span-2">
                 <label
                   htmlFor="quantity"
@@ -331,18 +281,15 @@ const AddProduct = () => {
                 <div className="mt-2">
                   <input
                     value={formData.quantity}
-                    onChange={handleChange}
+                    onChange={handleQuantityChange}
                     type="number"
                     name="quantity"
                     id="quantity"
-                    min="1"
-                    className="block w-full rounded-md px-3 py-1.5 text-base text-gray-900 border border-gray-300"
-                    required
+                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900"
                   />
                 </div>
               </div>
 
-              {/* Price */}
               <div className="sm:col-span-2">
                 <label
                   htmlFor="price"
@@ -357,26 +304,23 @@ const AddProduct = () => {
                     type="number"
                     name="price"
                     id="price"
-                    min="0.01"
-                    step="0.01"
-                    className="block w-full rounded-md px-3 py-1.5 text-base text-gray-900 border border-gray-300"
-                    required
+                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900"
                   />
                 </div>
               </div>
 
-              {/* Description */}
               <div className="col-span-full">
                 <label
-                  htmlFor="desc"
+                  htmlFor="message"
                   className="block mb-2 text-sm font-medium text-gray-900"
                 >
                   Description
                 </label>
                 <textarea
                   value={formData.desc}
-                  onChange={handleChange}
-                  name="desc"
+                  onChange={(e) =>
+                    setFormData({ ...formData, desc: e.target.value })
+                  }
                   id="desc"
                   rows="4"
                   className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300"
@@ -385,22 +329,21 @@ const AddProduct = () => {
               </div>
             </div>
 
+            <ToastContainer />
+
             <div className="mt-6 flex items-center justify-end gap-x-6">
               <button
                 type="button"
                 onClick={resetForm}
                 className="text-sm/6 font-semibold text-gray-900"
-                aria-label="Cancel and reset form"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={isLoading}
-                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-50"
-                aria-label="Save product"
+                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500"
               >
-                {isLoading ? "Saving..." : "Save"}
+                Save
               </button>
             </div>
           </div>
