@@ -74,5 +74,42 @@ The third phase brought expanded CRUD (Create, Read, Update, Delete) functionali
    
 ---
 
-## Contributing 
-- Contributions are welcome! Please feel free to fork the repository, submit issues, or create pull requests to improve the functionality of the project.
+## Update version 
+
+🚀 Features
+🛍 User Authentication – Secure login and registration.
+📦 Product Management – Add, update, and delete products.
+🏷️ Deals Management - Add, Update, delete, and shedule deals.
+🛒 Shopping Cart – Add/remove products and view the cart summary.
+📜 Admin Dashboard – Manage users, orders, and products efficiently.
+
+## future enhansment
+💳 Order Processing – Secure checkout and payment integration.
+📫 Address Management – Integreate billing address, Normal address.
+💸 Payment Getway – Integreate Payment gatway like paypal, rubicon.
+
+## Deployment
+
+To deploy this project run
+
+```bash
+    1st : ShoppingBackendApplication.java run this file 
+    2nd : npm run dev
+```
+```bash
+    user login :
+        username : user
+        password : userPassword
+    admin login : 
+        username : admin
+        password : adminPassword
+```
+
+Feel free to explore, test, and contribute to the ShoppingSystem project. Happy coding!
+
+
+
+
+
+
+
