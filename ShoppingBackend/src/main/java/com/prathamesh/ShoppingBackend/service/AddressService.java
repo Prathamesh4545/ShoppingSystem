@@ -1,10 +1,11 @@
 package com.prathamesh.ShoppingBackend.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
 import com.prathamesh.ShoppingBackend.model.Address;
+import com.prathamesh.ShoppingBackend.model.User;
 import com.prathamesh.ShoppingBackend.repository.AddressRepo;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class AddressService {
@@ -28,8 +29,11 @@ public class AddressService {
         return addressRepo.findAll();
     }
 
-    public Address updateAddress(Long id, Address address) {
+    public Address updateAddress(Long id, Address address, Long currentUserId) {
         Address existingAddress = getAddressById(id);
+        if (!existingAddress.getUser().getId().equals(currentUserId)) {
+            throw new RuntimeException("Unauthorized access: Address does not belong to the user");
+        }
         existingAddress.setStreet(address.getStreet());
         existingAddress.setCity(address.getCity());
         existingAddress.setState(address.getState());
@@ -44,6 +48,13 @@ public class AddressService {
     }
 
     public List<Address> getAddressesByUserId(Long userId) {
-        return addressRepo.findByUserId(userId);
+        User user = new User();
+        user.setId(userId);
+        return addressRepo.findByUser(user);
+    }
+
+    public boolean isOwner(Long addressId, Long userId) {
+        Address address = getAddressById(addressId);
+        return address.getUser().getId().equals(userId);
     }
 }

@@ -1,6 +1,7 @@
 package com.prathamesh.ShoppingBackend.service;
 
 import java.util.HashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -11,32 +12,45 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import com.prathamesh.ShoppingBackend.model.Cart;
 import com.prathamesh.ShoppingBackend.model.User;
+import com.prathamesh.ShoppingBackend.repository.CartRepo;
 import com.prathamesh.ShoppingBackend.repository.UserRepo;
+
+import io.jsonwebtoken.Jwts;
 
 @Service
 @Transactional
 public class UserService {
-
-    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
-
-    private final JWTService jwtService;
     private final UserRepo userRepo;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthenticationManager authManager;
+    private final JWTService jwtService;
+    private final CartRepo cartRepo;
+    private final FileStorageService fileStorageService;
 
-    public UserService(UserRepo userRepo, AuthenticationManager authManager,
-            JWTService jwtService) {
+    public UserService(
+            UserRepo userRepo,
+            AuthenticationManager authManager,
+            JWTService jwtService,
+            CartRepo cartRepo,
+            FileStorageService fileStorageService) {
         this.userRepo = userRepo;
+        this.fileStorageService = fileStorageService;
         this.bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
         this.authManager = authManager;
         this.jwtService = jwtService;
+        this.cartRepo = cartRepo;
     }
 
-    // Fetch user by ID
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+
+    @Transactional(readOnly = true) // Added for better transactional management
     public User getUserById(long id) {
         return userRepo.findById(id).orElse(null);
     }
@@ -58,13 +72,11 @@ public class UserService {
                     throw new RuntimeException("User not found");
                 }
 
-                // Generate token
                 String token = jwtService.generateToken(user.getUserName());
 
-                // Prepare response
                 Map<String, Object> response = new HashMap<>();
                 response.put("token", token);
-                response.put("user", authenticatedUser); // Include the full user object with ID
+                response.put("user", authenticatedUser);
                 response.put("roles", List.of(authenticatedUser.getRole().name()));
 
                 return response;
@@ -76,27 +88,31 @@ public class UserService {
             throw new RuntimeException("Login failed: " + e.getMessage());
         }
     }
+
     // Register a new user
+    // Modify the registerUser method to create a cart for the user
     public User registerUser(User user) {
         try {
-            // Check if username already exists
+            // Existing checks and password hashing
             Optional<User> existingUser = Optional.ofNullable(userRepo.findByUserName(user.getUserName()));
             if (existingUser.isPresent()) {
                 throw new IllegalArgumentException("Username already exists");
             }
-
-            // Hash the password
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 
             // Save the user
             User registeredUser = userRepo.save(user);
 
-            // Generate token for the newly registered user
-            String token = jwtService.generateToken(registeredUser.getUserName());
+            // Create a new cart and associate it with the user
+            Cart cart = new Cart();
+            cart.setUser(registeredUser);
+            cartRepo.save(cart);
 
-            // Log registration success
+            // Update the user's cart reference (optional but ensures consistency)
+            registeredUser.setCart(cart);
+            userRepo.save(registeredUser);
+
             logger.info("User registered successfully: {}", registeredUser.getUserName());
-
             return registeredUser;
         } catch (Exception e) {
             logger.error("Failed to register user: {}", user.getUserName(), e);
@@ -105,29 +121,37 @@ public class UserService {
     }
 
     // Update an existing user
-    public User updateUser(long id, User user) {
-        try {
-            User existingUser = userRepo.findById(id)
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + id));
-
-            // Update fields if provided
-            if (user.getUserName() != null) existingUser.setUserName(user.getUserName());
-            if (user.getFirstName() != null) existingUser.setFirstName(user.getFirstName());
-            if (user.getLastName() != null) existingUser.setLastName(user.getLastName());
-            if (user.getEmail() != null) existingUser.setEmail(user.getEmail());
-            if (user.getPhoneNumber() != null) existingUser.setPhoneNumber(user.getPhoneNumber());
-            if (user.getPassword() != null) existingUser.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
-            if (user.getRole() != null) existingUser.setRole(user.getRole());
-
-            // Save the updated user
-            User updatedUser = userRepo.save(existingUser);
-            logger.info("User updated successfully: {}", updatedUser.getUserName());
-
-            return updatedUser;
-        } catch (Exception e) {
-            logger.error("Failed to update user with ID: {}", id, e);
-            throw new RuntimeException("Failed to update user: " + e.getMessage());
+    public User updateUser(
+            long id,
+            String userName,
+            String firstName,
+            String lastName,
+            String email,
+            String phoneNumber,
+            String password,
+            MultipartFile imageUrl) {
+        User existingUser = userRepo.findById(id).orElse(null);
+        if (existingUser == null) {
+            return null; // User not found
         }
+
+        // Update fields
+        existingUser.setUserName(userName);
+        existingUser.setFirstName(firstName);
+        existingUser.setLastName(lastName);
+        existingUser.setEmail(email);
+        existingUser.setPhoneNumber(phoneNumber);
+        if (password != null && !password.isEmpty()) {
+            existingUser.setPassword(bCryptPasswordEncoder.encode(password));
+        }
+
+        // Handle image upload
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            String imagePath = fileStorageService.storeFile(imageUrl);
+            existingUser.setImageUrl(imagePath);
+        }
+
+        return userRepo.save(existingUser);
     }
 
     // Update user role
@@ -182,5 +206,16 @@ public class UserService {
     // Generate token for a user
     public String generateToken(User user) {
         return jwtService.generateToken(user.getUserName());
+    }
+
+    // UserService.java
+    public String refreshToken(String oldToken) {
+        String username = jwtService.extractUserName(oldToken);
+        UserDetails userDetails = (UserDetails) userRepo.findByUserName(username);
+
+        if (jwtService.validateToken(oldToken, userDetails)) {
+            return jwtService.generateToken(username);
+        }
+        throw new RuntimeException("Invalid or expired token");
     }
 }

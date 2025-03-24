@@ -1,21 +1,20 @@
 package com.prathamesh.ShoppingBackend.service;
 
+import com.prathamesh.ShoppingBackend.Exception.DealNotFoundException;
 import com.prathamesh.ShoppingBackend.model.Deals;
 import com.prathamesh.ShoppingBackend.model.Product;
 import com.prathamesh.ShoppingBackend.repository.DealsRepo;
 import com.prathamesh.ShoppingBackend.repository.ProductRepo;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import org.springframework.util.Assert;
 
 @Service
 @Slf4j
@@ -31,17 +30,20 @@ public class DealsService {
 
     @Cacheable("deals")
     public List<Deals> getAllDeals() {
+        log.debug("Fetching all deals");
         return dealsRepo.findAll();
     }
 
     @Transactional(readOnly = true)
     public Deals getDealById(int id) {
+        log.debug("Fetching deal by id: {}", id);
         return dealsRepo.findById(id)
-                .orElseThrow(() -> new RuntimeException("Deal not found with id: " + id));
+                .orElseThrow(() -> new DealNotFoundException("Deal not found with id: " + id));
     }
 
     @Cacheable("activeDeals")
     public List<Deals> getActiveDeals() {
+        log.debug("Fetching active deals");
         LocalDate now = LocalDate.now();
         LocalTime currentTime = LocalTime.now();
         return dealsRepo.findActiveDeals(now, currentTime);
@@ -49,6 +51,7 @@ public class DealsService {
 
     @Transactional(readOnly = true)
     public List<Product> getProductsByDealId(int id) {
+        log.debug("Fetching products by deal id: {}", id);
         Deals deal = getDealById(id);
         return deal.getProducts();
     }
@@ -59,28 +62,24 @@ public class DealsService {
         log.info("Saving deal: {}", deal);
         validateDeal(deal);
 
-        // Fetch products by their IDs and validate
-        List<Integer> productIds = deal.getProducts().stream().map(Product::getId).toList();
-        log.info("Product IDs: {}", productIds);
-        List<Product> products = productRepo.findAllById(productIds);
-        log.info("Found products: {}", products);
+        List<Product> managedProducts = productRepo
+                .findAllById(deal.getProducts().stream().map(Product::getId).toList());
 
-        if (products.size() != deal.getProducts().size()) {
+        if (managedProducts.size() != deal.getProducts().size()) {
             throw new IllegalArgumentException("Invalid product IDs provided.");
         }
-        deal.setProducts(products);
-        deal.setActive(deal.isActive());
 
+        deal.setProducts(managedProducts);
         return dealsRepo.save(deal);
     }
 
     @Transactional
     @CacheEvict(value = { "deals", "activeDeals" }, allEntries = true)
     public Deals updateDeal(int id, Deals updatedDeal) {
+        log.info("Updating deal with id: {}", id);
         validateDeal(updatedDeal);
         Deals existingDeal = getDealById(id);
 
-        // Fetch products by their IDs and validate
         List<Product> products = productRepo
                 .findAllById(updatedDeal.getProducts().stream().map(Product::getId).toList());
         if (products.size() != updatedDeal.getProducts().size()) {
@@ -88,7 +87,6 @@ public class DealsService {
         }
         existingDeal.setProducts(products);
 
-        // Update all fields
         existingDeal.setTitle(updatedDeal.getTitle());
         existingDeal.setDescription(updatedDeal.getDescription());
         existingDeal.setDiscountPercentage(updatedDeal.getDiscountPercentage());
@@ -105,22 +103,18 @@ public class DealsService {
     @Transactional
     @CacheEvict(value = { "deals", "activeDeals" }, allEntries = true)
     public void deleteDeal(int id) {
-        if (!dealsRepo.existsById(id)) {
-            throw new RuntimeException("Deal not found with id: " + id);
-        }
-        dealsRepo.deleteById(id);
+        log.info("Deleting deal with id: {}", id);
+        Deals deal = dealsRepo.findById(id)
+                .orElseThrow(() -> new DealNotFoundException("Deal not found with id: " + id));
+        dealsRepo.delete(deal);
     }
 
-    private void validateDeal(Deals deal) {
+    public static void validateDeal(Deals deal) {
         Assert.notNull(deal, "Deal cannot be null");
         Assert.hasText(deal.getTitle(), "Title cannot be empty");
-
-        // Validate start date is before or equal to end date
         Assert.isTrue(deal.getStartDate().isBefore(deal.getEndDate()) ||
                 deal.getStartDate().isEqual(deal.getEndDate()),
                 "Start date must be before or equal to end date");
-
-        // Validate start time is before end time if the dates are the same
         if (deal.getStartDate().isEqual(deal.getEndDate())) {
             Assert.isTrue(deal.getStartTime().isBefore(deal.getEndTime()),
                     "Start time must be before end time on the same day");
