@@ -8,6 +8,7 @@ import { useContext } from "react";
 
 const CartItem = React.memo(
   ({ item, handleIncrement, handleDecrement, removeFromCart }) => {
+    const { isDark } = useContext(ThemeContext);
     const product = item.product || {};
     const price = product.price || 0;
     const quantity = item.quantity || 0;
