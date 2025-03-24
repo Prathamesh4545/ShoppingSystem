@@ -1,15 +1,21 @@
 package com.prathamesh.ShoppingBackend.repository;
 
+import com.prathamesh.ShoppingBackend.model.Address;
+import com.prathamesh.ShoppingBackend.model.Orders;
+import com.prathamesh.ShoppingBackend.model.User;
+
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-import com.prathamesh.ShoppingBackend.model.Address;
 
-@Repository
-public interface AddressRepo extends JpaRepository<Address,Long>{
+public interface AddressRepo extends JpaRepository<Address, Long> {
 
-    List<Address> findByUserId(Long userId);
+    void deleteByOrders(Orders orders);
+
+    List<Address> findByOrders(Orders existingOrder);
+
+    List<Address> findByUser(User user);
+
     
 }

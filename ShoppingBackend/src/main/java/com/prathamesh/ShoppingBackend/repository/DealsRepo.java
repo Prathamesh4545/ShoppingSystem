@@ -14,7 +14,6 @@ import java.util.Optional;
 @Repository
 public interface DealsRepo extends JpaRepository<Deals, Integer> {
 
-    // In DealsRepo
     @Query("SELECT d FROM Deals d WHERE d.isActive = true " +
             "AND (:currentDate BETWEEN d.startDate AND d.endDate) " +
             "AND ((" +
@@ -23,7 +22,7 @@ public interface DealsRepo extends JpaRepository<Deals, Integer> {
             "  OR (d.endDate = :currentDate AND d.endTime >= :currentTime)" +
             "))")
     List<Deals> findActiveDeals(@Param("currentDate") LocalDate currentDate,
-            @Param("currentTime") LocalTime currentTime);
+                                @Param("currentTime") LocalTime currentTime);
 
     Optional<Deals> findById(int id);
 }
