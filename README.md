@@ -26,7 +26,7 @@ Before you get started, ensure you have the following installed on your machine:
 - and used this link on browser -->  http://localhost:5173/
 - also if you want used postman you can used without any worried
 - localhost:8080/api/products  --> this is for seen all products
-- Also one thing there is already have some data is in data.sql page and this doesn't have image because it is in byte formate so if you want you can add used frontend only 
+- Also one thing there is already have some data is in data.sql page and this doesn't have image because it is in byte formate so if you want you can add it using admin dashboard 
 
 ## Phase 1 - Initial Setup (Completed: 23-Jan-2025)
 In the first phase, the focus was on establishing a foundational architecture. The following features were developed:
@@ -97,9 +97,6 @@ To deploy this project run
     2nd : npm run dev
 ```
 ```bash
-    user login :
-        username : user
-        password : userPassword
     admin login : 
         username : admin
         password : adminPassword
