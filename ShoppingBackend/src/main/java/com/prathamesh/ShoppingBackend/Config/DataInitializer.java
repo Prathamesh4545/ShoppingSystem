@@ -21,7 +21,6 @@ import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Component
 @Configuration
@@ -61,14 +60,6 @@ public class DataInitializer {
                 admin.setPassword(passwordEncoder.encode("adminPassword"));
                 admin.setRole(Role.ADMIN);
                 userRepo.save(admin);
-
-                User user = new User();
-                user.setUserName("user");
-                user.setPassword(passwordEncoder.encode("userPassword"));
-                user.setRole(Role.USER);
-                userRepo.save(user);
-
-                System.out.println("✅ Default users initialized.");
             } catch (Exception e) {
                 System.err.println("⚠️ Error initializing users: " + e.getMessage());
                 e.printStackTrace();

@@ -3,6 +3,7 @@ package com.prathamesh.ShoppingBackend.Config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -40,30 +41,32 @@ public class SpringConfig {
                 .csrf(customizer -> customizer.disable()) // Disable CSRF for stateless APIs
                 .cors(customizer -> customizer.configurationSource(corsConfigurationSource())) // Enable CORS
                 .authorizeHttpRequests(request -> request
-                        // Public endpoints
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login",
                                 "/api/deals",
-                                "/api/deals/active", // Public deals
+                                "/api/deals/active",
                                 "/api/products/**", // Allow all products (GET /api/products, GET /api/products/{id},
                                                     // etc.)
-                                "/api/product/{id}" // Redundant (covered by /** above)
-                        ).permitAll()
-
-                        // ADMIN-specific endpoints
-                        .requestMatchers(
-                                "/api/users/**", // User management
-                                "/api/deals/**", // Full control over deals (create, update, delete)
-                                "/api/product", // Product management (create/update)
-                                "/api/products")
-                        .hasRole("ADMIN")
+                                "/api/products/{id}" // Allow single product (GET /api/products/{id})
+                        )
+                        .permitAll()
 
                         // USER-specific endpoints
-                        .requestMatchers(
-                                "/api/users/{id}", // User profile
-                                "/api/addresses/**" // Address management
-                        ).hasRole("USER")
+                        .requestMatchers("/api/deals").hasAnyRole("USER")
+                        .requestMatchers("/api/users/{id}").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/cart/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasAnyRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/address/**").hasAnyRole("USER", "ADMIN")
+
+                        // ADMIN-specific endpoints
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers("/api/deals/**").hasAnyRole( "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
                         // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults()) // Enable HTTP Basic Authentication
@@ -90,10 +93,8 @@ public class SpringConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Allow frontend origin
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); // Allow all HTTP methods
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE")); // Allow common HTTP methods
         configuration.setAllowedHeaders(List.of("*")); // Allow all headers
-        configuration.setAllowCredentials(true); // Allow credentials (e.g., cookies)
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints
         return source;
