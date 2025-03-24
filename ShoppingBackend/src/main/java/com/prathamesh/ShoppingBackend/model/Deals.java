@@ -1,24 +1,27 @@
 package com.prathamesh.ShoppingBackend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 import org.springframework.data.annotation.CreatedBy;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
-// Update the Deals entity to include productIds and isActive
+
 @Entity
 @Data
-@AllArgsConstructor
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Deals {
 
@@ -26,35 +29,42 @@ public class Deals {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @NotBlank
     private String title;
 
+    @NotBlank
     private String description;
 
+    @NotNull
     @Column(name = "discount_percentage")
     private BigDecimal discountPercentage;
 
     @Column(name = "image_url")
     private String imageUrl;
 
+    @NotNull
     @Column(name = "start_date")
     private LocalDate startDate;
 
+    @NotNull
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @NotNull
     @Column(nullable = false)
     private LocalTime startTime;
 
+    @NotNull
     @Column(nullable = false)
     private LocalTime endTime;
 
     @Column(name = "is_active")
     private boolean isActive = true;
 
-    @CreationTimestamp
+    @CreatedDate
     private LocalDate createdAt;
 
-    @UpdateTimestamp
+    @LastModifiedDate
     private LocalDate updatedAt;
 
     @CreatedBy
@@ -65,7 +75,7 @@ public class Deals {
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
     @JoinTable(name = "deal_product", joinColumns = @JoinColumn(name = "deal_id"), inverseJoinColumns = @JoinColumn(name = "product_id"))
-    private List<Product> products;
+    private List<Product> products = new ArrayList<>();
 
     public void addProduct(Product product) {
         this.products.add(product);
@@ -79,10 +89,8 @@ public class Deals {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         Deals deal = (Deals) o;
         return id != 0 && id == deal.id;
     }
