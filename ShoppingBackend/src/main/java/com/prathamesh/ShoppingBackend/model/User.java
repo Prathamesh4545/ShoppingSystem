@@ -39,8 +39,12 @@ public class User {
     @Column(name = "first_name")
     private String firstName;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Lob
+    @Column(name = "image_data")
+    private byte[] imageData;
+
+    @Column(name = "image_type")
+    private String imageType;
 
     @Column(name = "last_name")
     private String lastName;

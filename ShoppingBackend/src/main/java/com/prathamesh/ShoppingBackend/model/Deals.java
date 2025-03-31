@@ -9,13 +9,14 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Base64;
 
 @Entity
 @Data
@@ -39,7 +40,14 @@ public class Deals {
     @Column(name = "discount_percentage")
     private BigDecimal discountPercentage;
 
-    @Column(name = "image_url")
+    @Lob
+    @Column(name = "image_data")
+    private byte[] imageData;
+
+    @Column(name = "image_type")
+    private String imageType;
+
+    @Transient
     private String imageUrl;
 
     @NotNull
@@ -73,18 +81,31 @@ public class Deals {
     @LastModifiedBy
     private String updatedBy;
 
-    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE }, fetch = FetchType.EAGER)
-    @JoinTable(name = "deal_product", joinColumns = @JoinColumn(name = "deal_id"), inverseJoinColumns = @JoinColumn(name = "product_id"))
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "deal_products",
+        joinColumns = @JoinColumn(name = "deal_id"),
+        inverseJoinColumns = @JoinColumn(name = "product_id")
+    )
+    @JsonIgnoreProperties("deals")
     private List<Product> products = new ArrayList<>();
 
+    public String getImageUrl() {
+        if (imageData == null || imageType == null) return null;
+        return "data:" + imageType + ";base64," + Base64.getEncoder().encodeToString(imageData);
+    }
+
     public void addProduct(Product product) {
-        this.products.add(product);
-        product.getDeals().add(this);
+        if (!products.contains(product)) {
+            products.add(product);
+            product.getDeals().add(this);
+        }
     }
 
     public void removeProduct(Product product) {
-        this.products.remove(product);
-        product.getDeals().remove(this);
+        if (products.remove(product)) {
+            product.getDeals().remove(this);
+        }
     }
 
     @Override

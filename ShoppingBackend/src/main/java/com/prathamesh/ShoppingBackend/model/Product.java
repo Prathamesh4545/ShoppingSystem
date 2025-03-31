@@ -39,8 +39,8 @@ public class Product {
     @JsonManagedReference
     private List<ProductImage> images;
 
-    @ManyToMany(mappedBy = "products", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("products")
+    @ManyToMany(mappedBy = "products", fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<Deals> deals;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
