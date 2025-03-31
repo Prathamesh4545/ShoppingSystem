@@ -29,4 +29,6 @@ public class OrderRequest {
     private String status;
 
     private AddressDTO address;
+
+    private Long addressId; 
 }
