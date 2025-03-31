@@ -44,6 +44,7 @@ public class SpringConfig {
                         .requestMatchers(
                                 "/api/users/register",
                                 "/api/users/login",
+                                "/api/users/refresh-token",
                                 "/api/deals",
                                 "/api/deals/active",
                                 "/api/products/**", // Allow all products (GET /api/products, GET /api/products/{id},
@@ -54,16 +55,21 @@ public class SpringConfig {
 
                         // USER-specific endpoints
                         .requestMatchers("/api/deals").hasAnyRole("USER")
+                        .requestMatchers("/api/deals/{id}/products").hasAnyRole("USER")
                         .requestMatchers("/api/users/{id}").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/api/cart/**").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/orders").hasAnyRole("USER")
-                        .requestMatchers(HttpMethod.GET, "/api/orders/user/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/**").hasAnyRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/user/**").hasAnyRole("USER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/{orderId}/user/**").hasAnyRole("USER")
                         .requestMatchers("/api/address/**").hasAnyRole("USER", "ADMIN")
 
                         // ADMIN-specific endpoints
+                        .requestMatchers("/api/analytics/**").hasRole("ADMIN")
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/orders/**").hasRole("ADMIN")
                         .requestMatchers("/api/deals/**").hasAnyRole( "ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
@@ -92,8 +98,9 @@ public class SpringConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Allow frontend origin
+        configuration.setAllowedOrigins(List.of("http://localhost:4173","http://localhost:5173/")); // Allow frontend origin
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE")); // Allow common HTTP methods
+        configuration.setAllowCredentials(true); 
         configuration.setAllowedHeaders(List.of("*")); // Allow all headers
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration); // Apply to all endpoints

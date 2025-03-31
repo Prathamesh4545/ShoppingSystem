@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Date;
@@ -44,8 +45,10 @@ public class DataInitializer {
     }
 
     @Bean
+    @Transactional
     CommandLineRunner loadData() {
         return args -> {
+            initializeUsers();
             initializeProducts();
             initializeDeals();
         };
@@ -74,12 +77,15 @@ public class DataInitializer {
         if (productRepo.findAll().isEmpty()) {
             try {
                 List<Product> products = Arrays.asList(
-                    createProduct("Laptop", "Dell", "High performance laptop", "Electronics", LocalDate.of(2025, 3, 1)),
-                    createProduct("Smartphone", "Samsung", "Latest Android smartphone", "Electronics", LocalDate.of(2025, 3, 2)),
-                    createProduct("Headphones", "Sony", "Noise cancelling headphones", "Audio", LocalDate.of(2025, 3, 3)),
-                    createProduct("Smartwatch", "Apple", "Fitness tracking smartwatch", "Wearable", LocalDate.of(2025, 3, 4)),
-                    createProduct("Television", "LG", "4K Ultra HD TV", "Electronics", LocalDate.of(2025, 3, 5))
-                );
+                        createProduct("Laptop", "Dell", "High performance laptop", "Electronics",
+                                LocalDate.of(2025, 3, 1)),
+                        createProduct("Smartphone", "Samsung", "Latest Android smartphone", "Electronics",
+                                LocalDate.of(2025, 3, 2)),
+                        createProduct("Headphones", "Sony", "Noise cancelling headphones", "Audio",
+                                LocalDate.of(2025, 3, 3)),
+                        createProduct("Smartwatch", "Apple", "Fitness tracking smartwatch", "Wearable",
+                                LocalDate.of(2025, 3, 4)),
+                        createProduct("Television", "LG", "4K Ultra HD TV", "Electronics", LocalDate.of(2025, 3, 5)));
 
                 productRepo.saveAll(products);
                 System.out.println("✅ Default products initialized.");
@@ -109,30 +115,32 @@ public class DataInitializer {
     private void initializeDeals() {
         if (dealsRepo.findAll().isEmpty()) {
             try {
-                List<Product> products = productRepo.findAll();
-                if (products.isEmpty()) {
-                    System.out.println("⚠️ No products found! Skipping deals initialization.");
-                    return;
-                }
-
                 // Fetch products by their productName (since IDs are auto-generated)
                 Product laptop = productRepo.findByProductName("Laptop")
-                    .orElseThrow(() -> new RuntimeException("Laptop not found"));
+                        .orElseThrow(() -> new RuntimeException("Laptop not found"));
                 Product smartphone = productRepo.findByProductName("Smartphone")
-                    .orElseThrow(() -> new RuntimeException("Smartphone not found"));
+                        .orElseThrow(() -> new RuntimeException("Smartphone not found"));
                 Product headphones = productRepo.findByProductName("Headphones")
-                    .orElseThrow(() -> new RuntimeException("Headphones not found"));
+                        .orElseThrow(() -> new RuntimeException("Headphones not found"));
                 Product smartwatch = productRepo.findByProductName("Smartwatch")
-                    .orElseThrow(() -> new RuntimeException("Smartwatch not found"));
+                        .orElseThrow(() -> new RuntimeException("Smartwatch not found"));
                 Product television = productRepo.findByProductName("Television")
-                    .orElseThrow(() -> new RuntimeException("Television not found"));
+                        .orElseThrow(() -> new RuntimeException("Television not found"));
 
                 // Create deals
                 List<Deals> deals = Arrays.asList(
-                    createDeal("Winter Sale", "Up to 50% off on winter wear!", new BigDecimal(50), LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 31), smartwatch, television),
-                    createDeal("Buy One Get One Free", "Buy one product and get another for free.", new BigDecimal(100), LocalDate.of(2025, 3, 10), LocalDate.of(2025, 3, 20), headphones),
-                    createDeal("Flash Deal: 30% Off", "Flash deal! 30% off on electronics.", new BigDecimal(30), LocalDate.of(2025, 3, 12), LocalDate.of(2025, 3, 12), laptop, smartphone)
-                );
+                        createDeal("Winter Sale", "Up to 50% off on winter wear!", new BigDecimal(50),
+                                LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 31),
+                                LocalTime.of(0, 0), LocalTime.of(23, 59),
+                                smartwatch, television),
+                        createDeal("Buy One Get One Free", "Buy one product and get another for free.",
+                                new BigDecimal(100), LocalDate.of(2025, 3, 10), LocalDate.of(2025, 3, 20),
+                                LocalTime.of(0, 0), LocalTime.of(23, 59),
+                                headphones),
+                        createDeal("Flash Deal: 30% Off", "Flash deal! 30% off on electronics.",
+                                new BigDecimal(30), LocalDate.of(2025, 3, 12), LocalDate.of(2025, 3, 12),
+                                LocalTime.of(0, 0), LocalTime.of(23, 59),
+                                laptop, smartphone));
 
                 dealsRepo.saveAll(deals);
                 System.out.println("✅ Default deals initialized.");
@@ -145,13 +153,20 @@ public class DataInitializer {
         }
     }
 
-    private Deals createDeal(String title, String description, BigDecimal discountPercentage, LocalDate startDate, LocalDate endDate, Product... products) {
+    @Transactional
+    private Deals createDeal(String title, String description, BigDecimal discountPercentage,
+            LocalDate startDate, LocalDate endDate, LocalTime startTime, LocalTime endTime,
+            Product... products) {
         Deals deal = new Deals();
         deal.setTitle(title);
         deal.setDescription(description);
         deal.setDiscountPercentage(discountPercentage);
         deal.setStartDate(startDate);
         deal.setEndDate(endDate);
+        deal.setStartTime(startTime);
+        deal.setEndTime(endTime);
+        deal.setActive(true);
+
         for (Product product : products) {
             deal.addProduct(product);
         }

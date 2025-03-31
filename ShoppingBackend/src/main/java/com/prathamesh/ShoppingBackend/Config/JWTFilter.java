@@ -45,6 +45,12 @@ public class JWTFilter extends OncePerRequestFilter {
         String token = null;
         String username = null;
 
+        // Skip token validation for refresh-token endpoint
+        if (request.getRequestURI().equals("/api/users/refresh-token")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Check if the Authorization header is present and valid
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             logger.warn("Authorization header is missing or invalid for request: {}", request.getRequestURI());
