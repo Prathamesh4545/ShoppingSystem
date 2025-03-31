@@ -10,11 +10,11 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
-import org.springframework.util.Assert;
 
 @Service
 @Slf4j
@@ -90,7 +90,8 @@ public class DealsService {
         existingDeal.setTitle(updatedDeal.getTitle());
         existingDeal.setDescription(updatedDeal.getDescription());
         existingDeal.setDiscountPercentage(updatedDeal.getDiscountPercentage());
-        existingDeal.setImageUrl(updatedDeal.getImageUrl());
+        existingDeal.setImageData(updatedDeal.getImageData());
+        existingDeal.setImageType(updatedDeal.getImageType());
         existingDeal.setStartDate(updatedDeal.getStartDate());
         existingDeal.setEndDate(updatedDeal.getEndDate());
         existingDeal.setStartTime(updatedDeal.getStartTime());

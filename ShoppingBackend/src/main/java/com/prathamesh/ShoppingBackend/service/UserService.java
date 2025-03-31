@@ -1,6 +1,7 @@
 package com.prathamesh.ShoppingBackend.service;
 
 import java.util.HashMap;
+import java.io.IOException;
 
 import java.util.List;
 import java.util.Map;
@@ -32,16 +33,13 @@ public class UserService {
     private final AuthenticationManager authManager;
     private final JWTService jwtService;
     private final CartRepo cartRepo;
-    private final FileStorageService fileStorageService;
 
     public UserService(
             UserRepo userRepo,
             AuthenticationManager authManager,
             JWTService jwtService,
-            CartRepo cartRepo,
-            FileStorageService fileStorageService) {
+            CartRepo cartRepo) {
         this.userRepo = userRepo;
-        this.fileStorageService = fileStorageService;
         this.bCryptPasswordEncoder = new BCryptPasswordEncoder(12);
         this.authManager = authManager;
         this.jwtService = jwtService;
@@ -129,7 +127,7 @@ public class UserService {
             String email,
             String phoneNumber,
             String password,
-            MultipartFile imageUrl) {
+            MultipartFile imageFile) {
         User existingUser = userRepo.findById(id).orElse(null);
         if (existingUser == null) {
             return null; // User not found
@@ -146,9 +144,14 @@ public class UserService {
         }
 
         // Handle image upload
-        if (imageUrl != null && !imageUrl.isEmpty()) {
-            String imagePath = fileStorageService.storeFile(imageUrl);
-            existingUser.setImageUrl(imagePath);
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                existingUser.setImageData(imageFile.getBytes());
+                existingUser.setImageType(imageFile.getContentType());
+            } catch (IOException e) {
+                logger.error("Error processing image file: {}", e.getMessage());
+                throw new RuntimeException("Failed to process image file", e);
+            }
         }
 
         return userRepo.save(existingUser);

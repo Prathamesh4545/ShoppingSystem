@@ -1,14 +1,9 @@
 package com.prathamesh.ShoppingBackend.service;
 
-import com.prathamesh.ShoppingBackend.Dto.AddressDTO;
-import com.prathamesh.ShoppingBackend.Dto.OrderDTO;
-import com.prathamesh.ShoppingBackend.Dto.OrderItemDTO;
-import com.prathamesh.ShoppingBackend.Dto.OrderRequest;
-import com.prathamesh.ShoppingBackend.Exception.ResourceNotFoundException;
+import com.prathamesh.ShoppingBackend.Dto.*;
+import com.prathamesh.ShoppingBackend.Exception.*;
 import com.prathamesh.ShoppingBackend.model.*;
-import com.prathamesh.ShoppingBackend.repository.AddressRepo;
-import com.prathamesh.ShoppingBackend.repository.OrderItemRepo;
-import com.prathamesh.ShoppingBackend.repository.OrderRepo;
+import com.prathamesh.ShoppingBackend.repository.*;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,33 +11,40 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import com.prathamesh.ShoppingBackend.repository.UserRepo;
+import javax.security.auth.login.AccountNotFoundException;
 
 @Service
 @Transactional
 public class OrderService {
 
-    @Autowired
-    UserRepo userRepo;
-
-    @Autowired
-    private OrderRepo orderRepo;
-
-    @Autowired
-    private OrderItemRepo orderItemRepo;
-
-    @Autowired
-    private AddressRepo addressRepo;
-
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
+    
+    private static final BigDecimal TAX_RATE = new BigDecimal("0.10");
+    private static final BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("1000");
+    private static final BigDecimal SHIPPING_COST = new BigDecimal("100");
+    private static final BigDecimal MAX_TOTAL_VARIANCE = new BigDecimal("0.01");
 
-    // Get all orders
+    private final OrderRepo orderRepo;
+    private final OrderItemRepo orderItemRepo;
+    private final UserRepo userRepo;
+    private final AddressRepo addressRepo;
+    private final ProductRepo productRepo;
+
+    public OrderService(OrderRepo orderRepo, OrderItemRepo orderItemRepo, 
+                      UserRepo userRepo, AddressRepo addressRepo,
+                      ProductRepo productRepo) {
+        this.orderRepo = orderRepo;
+        this.orderItemRepo = orderItemRepo;
+        this.userRepo = userRepo;
+        this.addressRepo = addressRepo;
+        this.productRepo = productRepo;
+    }
+
     public List<OrderDTO> getAllOrders() {
         try {
             return orderRepo.findAll().stream()
@@ -50,206 +52,253 @@ public class OrderService {
                     .collect(Collectors.toList());
         } catch (Exception e) {
             logger.error("Failed to fetch all orders", e);
-            throw new RuntimeException("Failed to fetch all orders: " + e.getMessage());
+            throw new OrderProcessingException("Failed to fetch all orders");
         }
     }
 
-    // Get order by ID
     public OrderDTO getOrderById(Long id) {
         try {
             Orders order = orderRepo.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+                    .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + id));
             return convertToDTO(order);
         } catch (Exception e) {
             logger.error("Failed to fetch order by ID: {}", id, e);
-            throw new RuntimeException("Failed to fetch order by ID: " + e.getMessage());
+            throw new OrderProcessingException("Failed to fetch order by ID");
         }
     }
 
-    // Get orders by user ID
     public List<OrderDTO> getOrdersByUserId(Long userId) {
-        // Check if the user exists
-        if (!userRepo.existsById(userId)) {
-            throw new ResourceNotFoundException("User not found with ID: " + userId);
+        try {
+            if (!userRepo.existsById(userId)) {
+                throw new UserNotFoundException("User not found with ID: " + userId);
+            }
+
+            return orderRepo.findByUserId(userId).stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Failed to fetch orders for user: {}", userId, e);
+            throw new OrderProcessingException("Failed to fetch user orders");
         }
-
-        // Fetch orders from the database
-        List<Orders> orders = orderRepo.findByUserId(userId);
-
-        // Convert orders to DTOs
-        return orders.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
     }
 
-    // Create a new order
     public OrderDTO createOrder(OrderRequest orderRequest) {
         try {
-            // Validate user ID
-            if (orderRequest.getUserId() == null || orderRequest.getUserId() <= 0) {
-                throw new IllegalArgumentException("Invalid user ID");
+            User user = userRepo.findById(orderRequest.getUserId())
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+
+            Address shippingAddress = addressRepo.findById(orderRequest.getAddressId())
+                    .orElseThrow(() -> new AccountNotFoundException("Shipping address not found"));
+            
+            if (!shippingAddress.getUser().getId().equals(user.getId())) {
+                throw new SecurityException("Shipping address does not belong to the user");
             }
 
-            // Check if user exists
-            if (!userRepo.existsById(orderRequest.getUserId())) {
-                throw new ResourceNotFoundException("User not found with ID: " + orderRequest.getUserId());
+            if (orderRequest.getItems() == null || orderRequest.getItems().isEmpty()) {
+                throw new InvalidOrderException("Order must contain at least one item");
             }
-            // Convert OrderRequest to Orders entity
-            Orders order = new Orders();
-            order.setUserId(orderRequest.getUserId());
-            order.setTotalAmount(BigDecimal.valueOf(orderRequest.getTotalAmount()));
-            order.setStatus(Orders.OrderStatus.valueOf(orderRequest.getStatus()));
-            order.setCreatedAt(LocalDate.now());
-            order.setUpdatedAt(LocalDate.now());
 
-            // Initialize the items list
-            order.setItems(new ArrayList<>());
+            // Validate all products exist
+            for (OrderItemDTO item : orderRequest.getItems()) {
+                if (!productRepo.existsById(item.getProductId().intValue())) {
+                    throw new ProductNotFoundException("Product not found with ID: " + item.getProductId());
+                }
+            }
 
-            // Save the order
+            BigDecimal calculatedSubtotal = calculateSubtotal(orderRequest.getItems());
+            BigDecimal receivedSubtotal = BigDecimal.valueOf(orderRequest.getTotalAmount());
+            
+            validateOrderTotals(calculatedSubtotal, receivedSubtotal);
+
+            BigDecimal shipping = calculateShipping(calculatedSubtotal);
+            BigDecimal tax = calculateTax(calculatedSubtotal);
+            BigDecimal finalTotal = calculateFinalTotal(calculatedSubtotal, shipping, tax);
+
+            Orders order = buildOrder(user, shippingAddress, calculatedSubtotal, 
+                                     shipping, tax, finalTotal, orderRequest.getItems());
+            
             Orders savedOrder = orderRepo.save(order);
-
-            // Save order items
-            List<OrderItem> orderItems = orderRequest.getItems().stream()
-                    .map(item -> convertToOrderItemEntity(item, savedOrder))
-                    .collect(Collectors.toList());
-            orderItemRepo.saveAll(orderItems);
-
-            // Save address if provided
-            if (orderRequest.getAddress() != null) {
-                Address address = convertToAddressEntity((AddressDTO) orderRequest.getAddress());
-                address.setOrders(List.of(savedOrder));
-                addressRepo.save(address);
-            }
-
-            logger.info("Order created successfully for user ID: {}", orderRequest.getUserId());
             return convertToDTO(savedOrder);
+
         } catch (Exception e) {
-            logger.error("Failed to create order for user ID: {}", orderRequest.getUserId(), e);
-            throw new RuntimeException("Failed to create order: " + e.getMessage());
+            logger.error("Failed to create order: {}", e.getMessage());
+            throw new OrderProcessingException("Failed to create order: " + e.getMessage());
         }
     }
 
-    // Update an existing order
     public OrderDTO updateOrderStatus(Long orderId, String newStatus) {
         try {
-            // Validate order ID
-            if (orderId == null || orderId <= 0) {
-                throw new IllegalArgumentException("Invalid order ID.");
-            }
+            validateOrderId(orderId);
+            validateStatus(newStatus);
 
-            // Validate new status
-            if (newStatus == null || newStatus.trim().isEmpty()) {
-                throw new IllegalArgumentException("Invalid order status.");
-            }
-
-            // Fetch the order from the database
             Orders order = orderRepo.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
+                    .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
 
-            // Update the order status
             order.setStatus(Orders.OrderStatus.valueOf(newStatus));
-            Orders updatedOrder = orderRepo.save(order);
+            order.setUpdatedAt(LocalDateTime.now());
 
-            // Convert the updated order to a DTO
-            return convertToDTO(updatedOrder);
-
+            return convertToDTO(orderRepo.save(order));
         } catch (Exception e) {
-            // Log the error for debugging
-            System.err.println("Error updating order status for order ID " + orderId + ": " + e.getMessage());
-            throw new RuntimeException("Failed to update order status. Please try again later.");
+            logger.error("Failed to update order status: {}", e.getMessage());
+            throw new OrderProcessingException("Failed to update order status");
         }
     }
 
-    // Delete an order
     public void deleteOrder(Long id) {
         try {
             Orders order = orderRepo.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Order not found with id: " + id));
+                    .orElseThrow(() -> new OrderNotFoundException("Order not found with id: " + id));
 
-            // Delete associated address
-            addressRepo.deleteByOrders(order);
-
-            // Delete associated order items
             orderItemRepo.deleteByOrder(order);
-
-            // Delete the order
             orderRepo.delete(order);
-            logger.info("Order deleted successfully with ID: {}", id);
+            
+            logger.info("Order deleted successfully: {}", id);
         } catch (Exception e) {
-            logger.error("Failed to delete order with ID: {}", id, e);
-            throw new RuntimeException("Failed to delete order: " + e.getMessage());
+            logger.error("Failed to delete order: {}", id, e);
+            throw new OrderProcessingException("Failed to delete order");
         }
     }
 
-    // Convert Orders entity to OrderDTO
-    private OrderDTO convertToDTO(Orders order) {
-        OrderDTO orderDTO = new OrderDTO();
-        orderDTO.setId(order.getId());
-        orderDTO.setUserId(order.getUserId());
-        orderDTO.setTotalAmount(order.getTotalAmount());
-        orderDTO.setStatus(order.getStatus().toString());
-        orderDTO.setCreatedAt(LocalDateTime.of(order.getCreatedAt(), java.time.LocalTime.now()));
-        orderDTO.setUpdatedAt(LocalDateTime.of(order.getUpdatedAt(), java.time.LocalTime.now()));
-
-        // Handle null items
-        List<OrderItem> items = order.getItems();
-        if (items != null) {
-            List<OrderItemDTO> itemDTOs = items.stream()
-                    .map(this::convertToOrderItemDTO)
-                    .collect(Collectors.toList());
-            orderDTO.setItems(itemDTOs);
-        } else {
-            orderDTO.setItems(new ArrayList<>()); // Set empty list if items is null
+    public List<Map<String, Object>> getOrderCountByStatusForUser(Long userId) {
+        try {
+            if (!userRepo.existsById(userId)) {
+                throw new UserNotFoundException("User not found with ID: " + userId);
+            }
+            return orderRepo.getOrderCountByStatus(userId);
+        } catch (Exception e) {
+            logger.error("Failed to get order counts by status for user: {}", userId, e);
+            throw new OrderProcessingException("Failed to get order status counts");
         }
+    }
 
-        // Convert Address to AddressDTO if exists
-        if (order.getAddress() != null) {
-            orderDTO.setAddress(convertToAddressDTO(order.getAddress()));
+    private BigDecimal calculateSubtotal(List<OrderItemDTO> items) {
+        return items.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private void validateOrderTotals(BigDecimal calculated, BigDecimal received) {
+        BigDecimal variance = calculated.subtract(received).abs();
+        if (variance.compareTo(MAX_TOTAL_VARIANCE) > 0) {
+            throw new InvalidOrderTotalException(
+                String.format("Order total validation failed. Calculated: %s, Received: %s", 
+                calculated, received));
         }
-
-        return orderDTO;
     }
 
-    // Convert OrderItem entity to OrderItemDTO
-    private OrderItemDTO convertToOrderItemDTO(OrderItem orderItem) {
-        OrderItemDTO itemDTO = new OrderItemDTO();
-        itemDTO.setId(orderItem.getId());
-        itemDTO.setProductId(orderItem.getProductId());
-        itemDTO.setQuantity(orderItem.getQuantity());
-        itemDTO.setPrice(orderItem.getPrice());
-        return itemDTO;
+    private BigDecimal calculateShipping(BigDecimal subtotal) {
+        return subtotal.compareTo(FREE_SHIPPING_THRESHOLD) >= 0 
+                ? BigDecimal.ZERO 
+                : SHIPPING_COST;
     }
 
-    // Convert Address entity to AddressDTO
-    private AddressDTO convertToAddressDTO(Address address) {
-        AddressDTO addressDTO = new AddressDTO();
-        addressDTO.setId(address.getId());
-        addressDTO.setStreet(address.getStreet());
-        addressDTO.setCity(address.getCity());
-        addressDTO.setState(address.getState());
-        addressDTO.setZipCode(address.getZipCode());
-        addressDTO.setCountry(address.getCountry());
-        return addressDTO;
+    private BigDecimal calculateTax(BigDecimal subtotal) {
+        return subtotal.multiply(TAX_RATE)
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
-    // Convert OrderItemDTO to OrderItem entity
-    private OrderItem convertToOrderItemEntity(OrderItemDTO itemDTO, Orders order) {
+    private BigDecimal calculateFinalTotal(BigDecimal subtotal, BigDecimal shipping, BigDecimal tax) {
+        return subtotal.add(shipping).add(tax)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private Orders buildOrder(User user, Address address, BigDecimal subtotal,
+                            BigDecimal shipping, BigDecimal tax, BigDecimal total,
+                            List<OrderItemDTO> items) {
+        Orders order = new Orders();
+        order.setUserId(user.getId());
+        order.setAddress(address);
+        order.setSubtotalAmount(subtotal);
+        order.setShippingCost(shipping);
+        order.setTaxAmount(tax);
+        order.setTotalAmount(total);
+        order.setStatus(Orders.OrderStatus.PENDING);
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+
+        List<OrderItem> orderItems = items.stream()
+                .map(item -> buildOrderItem(order, item))
+                .collect(Collectors.toList());
+        
+        order.setItems(orderItems);
+        return order;
+    }
+
+    private OrderItem buildOrderItem(Orders order, OrderItemDTO item) {
         OrderItem orderItem = new OrderItem();
         orderItem.setOrder(order);
-        orderItem.setProductId(itemDTO.getProductId());
-        orderItem.setQuantity(itemDTO.getQuantity());
-        orderItem.setPrice(itemDTO.getPrice());
+        orderItem.setProductId(item.getProductId());
+        orderItem.setQuantity(item.getQuantity());
+        orderItem.setPrice(item.getPrice());
         return orderItem;
     }
 
-    // Convert AddressDTO to Address entity
-    private Address convertToAddressEntity(AddressDTO addressDTO) {
-        Address address = new Address();
-        address.setStreet(addressDTO.getStreet());
-        address.setCity(addressDTO.getCity());
-        address.setState(addressDTO.getState());
-        address.setZipCode(addressDTO.getZipCode());
-        address.setCountry(addressDTO.getCountry());
-        return address;
+    private void validateOrderId(Long orderId) {
+        if (orderId == null || orderId <= 0) {
+            throw new InvalidOrderException("Invalid order ID");
+        }
+    }
+
+    private void validateStatus(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            throw new InvalidOrderException("Status cannot be empty");
+        }
+        try {
+            Orders.OrderStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidOrderException("Invalid order status: " + status);
+        }
+    }
+
+    private OrderDTO convertToDTO(Orders order) {
+        if (order == null) {
+            return null;
+        }
+
+        OrderDTO dto = new OrderDTO();
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setSubtotalAmount(order.getSubtotalAmount());
+        dto.setShippingCost(order.getShippingCost());
+        dto.setTaxAmount(order.getTaxAmount());
+        dto.setTotalAmount(order.getTotalAmount());
+        dto.setStatus(order.getStatus().name());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setUpdatedAt(order.getUpdatedAt());
+
+        if (order.getItems() != null) {
+            dto.setItems(order.getItems().stream()
+                    .map(this::convertToOrderItemDTO)
+                    .collect(Collectors.toList()));
+        } else {
+            dto.setItems(new ArrayList<>());
+        }
+
+        if (order.getAddress() != null) {
+            dto.setAddress(convertToAddressDTO(order.getAddress()));
+        }
+
+        return dto;
+    }
+
+    private OrderItemDTO convertToOrderItemDTO(OrderItem item) {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setId(item.getId());
+        dto.setProductId(item.getProductId());
+        dto.setQuantity(item.getQuantity());
+        dto.setPrice(item.getPrice());
+        return dto;
+    }
+
+    private AddressDTO convertToAddressDTO(Address address) {
+        AddressDTO dto = new AddressDTO();
+        dto.setId(address.getId());
+        dto.setStreet(address.getStreet());
+        dto.setCity(address.getCity());
+        dto.setState(address.getState());
+        dto.setZipCode(address.getZipCode());
+        dto.setCountry(address.getCountry());
+        dto.setType(address.getType());
+        return dto;
     }
 }
