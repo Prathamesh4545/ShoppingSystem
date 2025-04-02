@@ -94,7 +94,8 @@ To deploy this project run
 
 ```bash
     1st : ShoppingBackendApplication.java run this file 
-    2nd : npm run dev
+    2nd : npm i
+    3rd : npm run dev
 ```
 ```bash
     admin login : 
