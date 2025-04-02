@@ -1,113 +1,141 @@
 # ShoppingSystem
 
-I am pleased to introduce the ShoppingSystem project, an innovative full-stack application currently in development. Despite being in the development phase, it has demonstrated significant potential. Please note that some SQL queries are incomplete and may lack associated images. However, you are encouraged to add your own data to test the functionality and explore its capabilities. Your feedback would be invaluable as I strive to enhance and refine the project further.
+Welcome to **ShoppingSystem**, an advanced full-stack application designed to enhance the shopping experience. While the project is still in development, it demonstrates significant potential. This document serves as a comprehensive guide to the system’s features, functionalities, and instructions for getting started.
+
+Your feedback is highly valued, and we encourage you to explore, test, and contribute to the project to help refine and improve the application.
+
+---
 
 ## Project Overview
 
-The ShoppingSystem application is designed to create a seamless and interactive shopping experience. It consists of two main components:
-1. **Frontend**: A dynamic and interactive interface built using React.
-2. **Backend**: A robust and scalable server-side using Java Spring Boot.
+**ShoppingSystem** is designed to provide a seamless and engaging shopping experience. The application consists of two primary components:
 
-- This project follows an MVC (Model-View-Controller) architecture with a four-layered structure: Controller, Service, Repository, and Model.
+1. **Frontend**: A responsive and user-friendly interface developed using React.
+2. **Backend**: A robust and scalable backend powered by Java Spring Boot.
+
+The system follows the **Model-View-Controller (MVC)** architecture, utilizing a four-layered structure: Controller, Service, Repository, and Model.
+
+---
 
 ## Requirements
 
-Before you get started, ensure you have the following installed on your machine:
-- React.js (for running the frontend)
-- Java JDK (for running the backend)
-- Maven (for managing Java dependencies)
-- A modern web browser
+To run this project, the following software must be installed on your system:
 
-## How To Start Projects 
-- 1st download
-- In forntend open terminal and install node module using (npm install)
-- after start the backend project 1st
-- and then start frontend project using (npm run dev)
-- and used this link on browser -->  http://localhost:5173/
-- also if you want used postman you can used without any worried
-- localhost:8080/api/products  --> this is for seen all products
-- Also one thing there is already have some data is in data.sql page and this doesn't have image because it is in byte formate so if you want you can add it using admin dashboard 
-
-## Phase 1 - Initial Setup (Completed: 23-Jan-2025)
-In the first phase, the focus was on establishing a foundational architecture. The following features were developed:
-
-- Product Entity: Implemented the Product entity with its repository, service, and controller layers.
-- API Development:
-  - Created endpoints to fetch all products and individual product details by ID.
-- Frontend Development:
-  - Developed the homepage UI using React, utilizing React hooks like useState and useEffect.
-  - Incorporated routing with React Router for easy navigation between pages.
+- **React.js** – For the frontend.
+- **Java JDK** – For the backend.
+- **Maven** – For managing Java dependencies.
+- **Modern Web Browser** – For exploring the application.
 
 ---
 
-## Phase 2 - Core Features Implementation (Completed: 25-Jan-2025)
-The second phase focused on key functionalities that are critical to the system's operation. This phase included:
+## Getting Started
 
-- API Development:
-  - Implemented the add product endpoint to allow users to add new products.
-- Frontend Enhancements:
-  - Created and designed a product form for submitting new products, including fields for product details and image uploads.
-  - Displayed all products fetched from the backend.
-  - Set up routing for different pages:
-    1. GET /api/products - Fetch all products
-    2. GET /api/products/{id} - Fetch product by ID
-    3. POST /api/products - Add new product
- - Routing is defined as follows:
-    1. / - Home Page (<Home />)
-    2. /product/:id - Product Detail Page (<Product />)
-    3. /product/add - Add New Product Form (<AddProduct />)
-       
+### Setup Instructions
+
+1. Clone the repository.
+2. Navigate to the **frontend** directory and install the required dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the backend server by running the main application file:
+   ```bash
+   ShoppingBackendApplication.java
+   ```
+4. Launch the frontend application:
+   ```bash
+   npm run dev
+   ```
+5. Open your web browser and visit the application at:
+   ```bash
+   http://localhost:5173/
+   ```
+6. Utilize Postman to test the APIs:
+   - `GET /api/products` – Retrieve a list of all products.
+   - `GET /api/products/{id}` – Fetch a product by its ID.
+   - `POST /api/products` – Add a new product.
+
+   Note: Preloaded data is available in the `data.sql` file. Product images are stored in byte format, and you can add or update images via the admin dashboard.
+
 ---
 
-## Phase 3 - Expanded CRUD Operations (Completed)
-The third phase brought expanded CRUD (Create, Read, Update, Delete) functionality, improving the system's flexibility and user experience:
+## Development Phases
 
- - API Development:
-   - Implemented GET all products, UPDATE product, and DELETE product endpoints.
- - Frontend Enhancements:
-   - Added a search bar with multiple categories to help users filter products.
-   - Implemented buttons for updating and deleting products directly from the product list.
-   - Enhanced product display pages with actionable buttons for Update and Delete.
- - Routing is defined as follows:
-   1. /product - Product List (<GetProductById />)
-   2. /product/update/:id - Update Product Form (<UpdateProduct />)
-   
+### Phase 1: Initial Setup (Completed on 23-Jan-2025)
+
+Implemented the Product entity, along with repository, service, and controller layers.
+
+Developed APIs to:
+- Fetch all products.
+- Retrieve product details by ID.
+
+Created the homepage using React, incorporating React hooks for state and effect management.
+Integrated React Router to facilitate navigation between pages.
+
+### Phase 2: Core Features (Completed on 25-Jan-2025)
+
+Enhanced functionality:
+- Added product submission forms with image upload support.
+- Established routing for the following key pages:
+  - `/` – Homepage
+  - `/product/:id` – Product Details
+  - `/product/add` – Add New Product
+
+### Phase 3: CRUD Operations
+
+Expanded API functionality to include:
+- GET, UPDATE, and DELETE operations for products.
+
+Improved the user interface:
+- Implemented a search bar with category filters.
+- Added actionable buttons for product update and deletion.
+
+### Phase 4 to Phase 13: Enhancements and Deployment
+
+- Migrated the database from H2 to PostgreSQL.
+- Developed an Admin Dashboard for efficient management of users, orders, and products.
+- Introduced role-based access control:
+  - **Admin** – Manages system settings (without the ability to make purchases).
+  - **User** – Adds items to the cart, manages profiles, and processes orders.
+- Integrated Docker for simplified deployment.
+- Resolved various server-side issues, including HTTP status errors (500, 403, 401).
+
 ---
 
-## Update version 
+## Key Features
 
-🚀 Features
-🛍 User Authentication – Secure login and registration.
-📦 Product Management – Add, update, and delete products.
-🏷️ Deals Management - Add, Update, delete, and shedule deals.
-🛒 Shopping Cart – Add/remove products and view the cart summary.
-📜 Admin Dashboard – Manage users, orders, and products efficiently.
+- 🔒 **User Authentication** – Secure login and registration processes.
+- 🛍️ **Product Management** – Add, update, and delete products.
+- 🏷️ **Deals Management** – Schedule, add, update, and delete promotional deals.
+- 📜 **Admin Dashboard** – Comprehensive system management tools.
+- 🛒 **Shopping Cart** – Add and remove products, and view summaries.
 
-## future enhansment
-💳 Order Processing – Secure checkout and payment integration.
-📫 Address Management – Integreate billing address, Normal address.
-💸 Payment Getway – Integreate Payment gatway like paypal, rubicon.
+---
 
-## Deployment
+## Planned Future Enhancements
 
-To deploy this project run
+The following features are planned for future releases:
+- 💳 **Order Processing** – Secure checkout and payment gateway integration.
+- 💸 **Payment Gateway Integration** – Integration with payment platforms such as PayPal and Razorpay.
 
-```bash
-    1st : ShoppingBackendApplication.java run this file 
-    2nd : npm i
-    3rd : npm run dev
-```
-```bash
-    admin login : 
-        username : admin
-        password : adminPassword
-```
+---
 
-Feel free to explore, test, and contribute to the ShoppingSystem project. Happy coding!
+## Deployment Instructions
 
+To deploy the project, follow these steps:
 
+1. Start the backend application by executing `ShoppingBackendApplication.java`.
+2. Install the frontend dependencies:
+   ```bash
+   npm install
+   ```
+3. Launch the frontend:
+   ```bash
+   npm run dev
+   ```
 
+### Admin Login Credentials:
 
+- **Username**: admin
+- **Password**: adminPassword
 
-
-
+We encourage you to explore, test, and contribute to ShoppingSystem to help enhance its functionality and user experience. Thank you for your participation, and happy coding! 🚀
