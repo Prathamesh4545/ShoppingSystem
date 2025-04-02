@@ -70,8 +70,15 @@ public class DataInitializer {
         User admin = new User();
         admin.setUserName("admin");
         admin.setPassword(passwordEncoder.encode("adminPassword"));
-        admin.setRole(Role.ADMIN);
+        admin.setRole(Role.ADMIN);  // Always set explicitly
         userRepo.save(admin);
+        
+        // When creating regular users
+        User regularUser = new User();
+        regularUser.setUserName("user");
+        regularUser.setPassword(passwordEncoder.encode("userPassword"));
+        regularUser.setRole(Role.USER);  // Set explicitly instead of relying on DB default
+        userRepo.save(regularUser);
     }
 
     @Transactional
