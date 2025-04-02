@@ -98,6 +98,8 @@ export const ThemeProvider = ({ children }) => {
       lg: '1.5rem',
       xl: '2rem',
       '2xl': '3rem',
+      '3xl': '5rem',
+      '4xl': '7rem',
     },
     borderRadius: {
       sm: '0.25rem',
