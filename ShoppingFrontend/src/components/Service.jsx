@@ -1,102 +1,183 @@
 import React from "react";
-import { Button } from "flowbite-react";
+import { useTheme } from "../context/ThemeContext";
 import { FaPhoneAlt, FaTruck, FaUndo, FaQuestionCircle } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { useContext } from "react";
-import ThemeContext from "../context/ThemeContext";
 
 const ServicePage = () => {
-  const { isDarkMode, colors, spacing, typography } = useContext(ThemeContext);
+  const theme = useTheme();
+  const { isDark, colors, spacing, typography, borderRadius, shadows, transitions } = theme;
+
+  // Transition durations in seconds for Framer Motion
+  const transitionDurations = {
+    fast: 0.15,
+    normal: 0.25,
+    slow: 0.35
+  };
+
+  // Background and text colors based on theme
+  const bgColor = isDark ? colors.background.dark.primary : colors.background.light.primary;
+  const cardBgColor = isDark ? colors.background.dark.secondary : colors.background.light.secondary;
+  const cardHoverBgColor = isDark ? colors.background.dark.tertiary : colors.background.light.tertiary;
+  const textColor = isDark ? colors.text.dark.primary : colors.text.light.primary;
+  const textColorSecondary = isDark ? colors.text.dark.secondary : colors.text.light.secondary;
 
   const services = [
     {
-      icon: <FaPhoneAlt className={`text-4xl ${colors.primary.DEFAULT} mb-3`} />,
+      icon: <FaPhoneAlt size={32} color={colors.primary.DEFAULT} />,
       title: "Customer Support",
       description: "We are here to help with any questions or concerns you have.",
       buttonText: "Contact Support",
-      color: "blue",
+      buttonColor: colors.primary.DEFAULT,
       delay: 0.1
     },
     {
-      icon: <FaTruck className={`text-4xl ${colors.success.DEFAULT} mb-3`} />,
+      icon: <FaTruck size={32} color={colors.success.DEFAULT} />,
       title: "Delivery Information",
       description: "Fast and reliable shipping to ensure your orders arrive on time.",
       buttonText: "Track Order",
-      color: "green",
+      buttonColor: colors.success.DEFAULT,
       delay: 0.2
     },
     {
-      icon: <FaUndo className={`text-4xl ${colors.warning.DEFAULT} mb-3`} />,
+      icon: <FaUndo size={32} color={colors.warning.DEFAULT} />,
       title: "Return Policy",
       description: "No worries! We offer a hassle-free return process if you change your mind.",
       buttonText: "Learn More",
-      color: "yellow",
+      buttonColor: colors.warning.DEFAULT,
       delay: 0.3
     },
     {
-      icon: <FaQuestionCircle className={`text-4xl ${colors.secondary.DEFAULT} mb-3`} />,
+      icon: <FaQuestionCircle size={32} color={colors.secondary.DEFAULT} />,
       title: "Frequently Asked Questions",
       description: "Get answers to the most common questions about our products and services.",
       buttonText: "View FAQs",
-      color: "purple",
+      buttonColor: colors.secondary.DEFAULT,
       delay: 0.4
     }
   ];
 
   return (
-    <div className={`min-h-screen py-20 ${isDarkMode ? colors.background.dark.primary : colors.background.light.primary}`}>
-      <div className={`max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 ${spacing.md}`}>
+    <div
+      style={{
+        minHeight: "100vh",
+        paddingTop: spacing['4xl'],
+        paddingBottom: spacing['2xl'],
+        backgroundColor: bgColor
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "64rem",
+          margin: "0 auto",
+          padding: `0 ${spacing.md}`
+        }}
+      >
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className={`shadow-lg rounded-lg p-8 ${isDarkMode ? colors.background.dark.secondary : colors.background.light.secondary}`}
+          transition={{ duration: transitionDurations.normal }}
+          style={{
+            boxShadow: shadows.lg,
+            borderRadius: borderRadius.lg,
+            padding: spacing.xl,
+            backgroundColor: cardBgColor
+          }}
         >
           {/* Title Section */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-center mb-12"
+            transition={{ duration: transitionDurations.normal, delay: 0.2 }}
+            style={{
+              textAlign: "center",
+              marginBottom: spacing['2xl']
+            }}
           >
-            <h1 className={`text-4xl font-bold ${isDarkMode ? colors.text.dark.primary : colors.text.light.primary}`}>
+            <h1 
+              style={{
+                fontSize: typography.fontSize['4xl'],
+                fontWeight: typography.fontWeight.bold,
+                color: textColor
+              }}
+            >
               Our Services
             </h1>
-            <p className={`mt-4 text-lg ${isDarkMode ? colors.text.dark.secondary : colors.text.light.secondary}`}>
+            <p 
+              style={{
+                marginTop: spacing.md,
+                fontSize: typography.fontSize.lg,
+                color: textColorSecondary
+              }}
+            >
               Learn more about what we offer and how we can help you!
             </p>
           </motion.div>
 
           {/* Service Cards */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 ${spacing.lg}`}>
+          <div 
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: spacing.lg
+            }}
+          >
             {services.map((service, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: service.delay }}
+                transition={{ duration: transitionDurations.normal, delay: service.delay }}
                 whileHover={{ scale: 1.05 }}
-                className={`rounded-lg p-6 shadow-md ${
-                  isDarkMode 
-                    ? `${colors.background.dark.tertiary} hover:bg-gray-600` 
-                    : `${colors.background.light.tertiary} hover:bg-gray-50`
-                } transition-colors duration-300`}
+                style={{
+                  borderRadius: borderRadius.lg,
+                  padding: spacing.lg,
+                  boxShadow: shadows.md,
+                  backgroundColor: cardBgColor,
+                  transition: transitions.normal
+                }}
               >
-                <div className="text-center mb-4">
-                  {service.icon}
-                  <h3 className={`text-xl font-semibold ${isDarkMode ? colors.text.dark.primary : colors.text.light.primary}`}>
+                <div 
+                  style={{
+                    textAlign: "center",
+                    marginBottom: spacing.md
+                  }}
+                >
+                  <div style={{ marginBottom: spacing.sm }}>{service.icon}</div>
+                  <h3 
+                    style={{
+                      fontSize: typography.fontSize.xl,
+                      fontWeight: typography.fontWeight.semibold,
+                      color: textColor
+                    }}
+                  >
                     {service.title}
                   </h3>
-                  <p className={`mt-2 ${isDarkMode ? colors.text.dark.secondary : colors.text.light.secondary}`}>
+                  <p 
+                    style={{
+                      marginTop: spacing.sm,
+                      color: textColorSecondary
+                    }}
+                  >
                     {service.description}
                   </p>
                 </div>
-                <Button 
-                  color={service.color} 
-                  className="w-full transition-all duration-300 hover:scale-105"
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  style={{
+                    width: "100%",
+                    padding: `${spacing.sm} ${spacing.md}`,
+                    backgroundColor: service.buttonColor,
+                    color: "#FFFFFF",
+                    borderRadius: borderRadius.md,
+                    fontWeight: typography.fontWeight.medium,
+                    border: "none",
+                    cursor: "pointer",
+                    transition: transitions.fast
+                  }}
                 >
                   {service.buttonText}
-                </Button>
+                </motion.button>
               </motion.div>
             ))}
           </div>

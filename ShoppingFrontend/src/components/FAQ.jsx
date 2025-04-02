@@ -1,12 +1,27 @@
 import React, { useState } from 'react';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaQuestionCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useContext } from 'react';
-import ThemeContext from '../context/ThemeContext';
+import { useTheme } from '../context/ThemeContext';
 
 const FAQPage = () => {
   const [activeIndex, setActiveIndex] = useState(null);
-  const { isDarkMode } = useContext(ThemeContext);
+  const theme = useTheme();
+  const { isDark, colors, spacing, typography, borderRadius, shadows, transitions } = theme;
+
+  // Transition durations in seconds for Framer Motion
+  const transitionDurations = {
+    fast: 0.15,
+    normal: 0.25,
+    slow: 0.35
+  };
+  
+  // Theme-based colors
+  const bgColor = isDark ? colors.background.dark.primary : colors.background.light.primary;
+  const cardBgColor = isDark ? colors.background.dark.secondary : colors.background.light.secondary;
+  const faqItemBgColor = isDark ? colors.background.dark.tertiary : colors.background.light.tertiary;
+  const faqItemHoverBgColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
+  const textColor = isDark ? colors.text.dark.primary : colors.text.light.primary;
+  const textColorSecondary = isDark ? colors.text.dark.secondary : colors.text.light.secondary;
 
   const toggleQuestion = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -59,116 +74,229 @@ const FAQPage = () => {
     : faqData.filter(faq => faq.category === selectedCategory);
 
   return (
-    <div className={`min-h-screen py-20 ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div
+      style={{
+        minHeight: "100vh",
+        paddingTop: spacing['4xl'],
+        paddingBottom: spacing['2xl'],
+        backgroundColor: bgColor
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "64rem",
+          margin: "0 auto",
+          padding: `0 ${spacing.md}`
+        }}
+      >
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className={`shadow-lg rounded-lg p-8 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}
+          transition={{ duration: transitionDurations.normal }}
+          style={{
+            boxShadow: shadows.lg,
+            borderRadius: borderRadius.lg,
+            padding: spacing.xl,
+            backgroundColor: cardBgColor
+          }}
         >
           {/* Title Section */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-center mb-12"
+            transition={{ duration: transitionDurations.normal, delay: 0.2 }}
+            style={{
+              textAlign: "center",
+              marginBottom: spacing['2xl']
+            }}
           >
-            <h1 className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h1 
+              style={{
+                fontSize: typography.fontSize['4xl'],
+                fontWeight: typography.fontWeight.bold,
+                color: textColor
+              }}
+            >
               Frequently Asked Questions
             </h1>
-            <p className={`mt-4 text-lg ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p 
+              style={{
+                marginTop: spacing.md,
+                fontSize: typography.fontSize.lg,
+                color: textColorSecondary
+              }}
+            >
               Find answers to the most common questions about our services and policies.
             </p>
           </motion.div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
-            <button
+          <div 
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: spacing.sm,
+              marginBottom: spacing.xl
+            }}
+          >
+            <CategoryButton 
+              label="All" 
+              isActive={selectedCategory === 'all'} 
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full transition-colors duration-300 ${
-                selectedCategory === 'all'
-                  ? isDarkMode
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-blue-500 text-white'
-                  : isDarkMode
-                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              All
-            </button>
+              theme={theme}
+            />
+            
             {categories.map(category => (
-              <button
-                key={category}
+              <CategoryButton 
+                key={category} 
+                label={category} 
+                isActive={selectedCategory === category} 
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full transition-colors duration-300 ${
-                  selectedCategory === category
-                    ? isDarkMode
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-500 text-white'
-                    : isDarkMode
-                      ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category}
-              </button>
+                theme={theme}
+              />
             ))}
           </div>
 
           {/* FAQ Accordion */}
-          <div className="space-y-4">
-            {filteredFAQs.map((faq, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className={`rounded-lg shadow-md overflow-hidden ${
-                  isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
-                }`}
-              >
+          <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+            {filteredFAQs.length > 0 ? (
+              filteredFAQs.map((faq, index) => (
                 <motion.div
-                  className={`flex justify-between items-center p-4 cursor-pointer ${
-                    isDarkMode ? 'hover:bg-gray-600' : 'hover:bg-gray-50'
-                  } transition-colors duration-200`}
-                  onClick={() => toggleQuestion(index)}
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: transitionDurations.normal, delay: index * 0.1 }}
+                  style={{
+                    borderRadius: borderRadius.lg,
+                    boxShadow: shadows.md,
+                    overflow: "hidden",
+                    backgroundColor: faqItemBgColor
+                  }}
                 >
-                  <h3 className={`text-xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
-                    {faq.question}
-                  </h3>
                   <motion.div
-                    animate={{ rotate: activeIndex === index ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: spacing.lg,
+                      cursor: "pointer",
+                      backgroundColor: activeIndex === index ? faqItemHoverBgColor : 'transparent',
+                      transition: transitions.normal
+                    }}
+                    whileHover={{ backgroundColor: faqItemHoverBgColor }}
+                    onClick={() => toggleQuestion(index)}
                   >
-                    {activeIndex === index ? (
-                      <FaChevronUp className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    ) : (
-                      <FaChevronDown className={`text-xl ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    )}
-                  </motion.div>
-                </motion.div>
-
-                <AnimatePresence>
-                  {activeIndex === index && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={`px-4 pb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}
+                    <h3 
+                      style={{
+                        fontSize: typography.fontSize.xl,
+                        fontWeight: typography.fontWeight.semibold,
+                        color: textColor
+                      }}
                     >
-                      <p>{faq.answer}</p>
+                      {faq.question}
+                    </h3>
+                    <motion.div
+                      animate={{ rotate: activeIndex === index ? 180 : 0 }}
+                      transition={{ duration: transitionDurations.fast }}
+                    >
+                      {activeIndex === index ? (
+                        <FaChevronUp style={{ fontSize: "1.25rem", color: colors.primary.DEFAULT }} />
+                      ) : (
+                        <FaChevronDown style={{ fontSize: "1.25rem", color: textColorSecondary }} />
+                      )}
                     </motion.div>
-                  )}
-                </AnimatePresence>
+                  </motion.div>
+
+                  <AnimatePresence>
+                    {activeIndex === index && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: transitionDurations.normal }}
+                        style={{
+                          padding: `0 ${spacing.lg} ${spacing.lg} ${spacing.lg}`,
+                          color: textColorSecondary,
+                          lineHeight: 1.6,
+                          overflow: "hidden"
+                        }}
+                      >
+                        <p>{faq.answer}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  textAlign: "center",
+                  padding: spacing.xl,
+                  backgroundColor: faqItemBgColor,
+                  borderRadius: borderRadius.lg,
+                  color: textColorSecondary
+                }}
+              >
+                <FaQuestionCircle 
+                  style={{ 
+                    fontSize: "3rem", 
+                    color: colors.primary.light,
+                    display: "block",
+                    margin: "0 auto",
+                    marginBottom: spacing.md
+                  }} 
+                />
+                <p style={{ fontSize: typography.fontSize.lg }}>
+                  No FAQs found in this category. Please try another category.
+                </p>
               </motion.div>
-            ))}
+            )}
           </div>
         </motion.div>
       </div>
     </div>
+  );
+};
+
+// Category button component
+const CategoryButton = ({ label, isActive, onClick, theme }) => {
+  const { isDark, colors, borderRadius, spacing, transitions } = theme;
+  
+  // Determine button colors based on theme and active state
+  const buttonColor = isActive 
+    ? colors.primary.DEFAULT 
+    : 'transparent';
+  
+  const textColor = isActive 
+    ? "#FFFFFF" 
+    : isDark ? colors.text.dark.secondary : colors.text.light.secondary;
+  
+  const borderColor = isActive 
+    ? colors.primary.DEFAULT 
+    : isDark ? colors.text.dark.tertiary : colors.text.light.tertiary;
+  
+  return (
+    <motion.button
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ duration: 0.15 }}
+      onClick={onClick}
+      style={{
+        padding: `${spacing.xs} ${spacing.md}`,
+        borderRadius: borderRadius.full,
+        backgroundColor: buttonColor,
+        color: textColor,
+        border: `1px solid ${borderColor}`,
+        transition: transitions.normal,
+        cursor: "pointer",
+        fontWeight: isActive ? "600" : "normal"
+      }}
+    >
+      {label}
+    </motion.button>
   );
 };
 

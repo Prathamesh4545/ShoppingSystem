@@ -8,8 +8,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { isTokenExpired } from "../utils/auth";
-import { useContext } from "react";
-import ThemeContext from "../context/ThemeContext";
+import { useTheme } from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaTag,
@@ -20,12 +19,27 @@ import {
 } from "react-icons/fa";
 
 const DealsPage = () => {
-  const { isDarkMode, colors, spacing, typography } = useContext(ThemeContext);
+  const theme = useTheme();
+  const { isDark, colors, spacing, typography, borderRadius, shadows, transitions } = theme;
+  
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Parse transition durations to milliseconds for Framer Motion
+  const getTransitionDuration = (transitionString) => {
+    // If transitions.normal is "250ms ease-in-out", extract just the number
+    const match = transitionString.match(/(\d+)ms/);
+    return match ? Number(match[1]) / 1000 : 0.3; // Convert to seconds or default to 0.3
+  };
+
+  const transitionDurations = {
+    fast: getTransitionDuration(transitions.fast) || 0.15,
+    normal: getTransitionDuration(transitions.normal) || 0.25,
+    slow: getTransitionDuration(transitions.slow) || 0.35
+  };
 
   const fetchDeals = useCallback(async () => {
     if (isTokenExpired(token)) {
@@ -102,38 +116,46 @@ const DealsPage = () => {
     return "https://placehold.co/600x400?text=No+Image";
   };
 
+  // Determine background and text colors based on theme
+  const bgColor = isDark ? colors.background.dark.primary : colors.background.light.primary;
+  const textColor = isDark ? colors.text.dark.primary : colors.text.light.primary;
+  const textColorSecondary = isDark ? colors.text.dark.secondary : colors.text.light.secondary;
+  const textColorTertiary = isDark ? colors.text.dark.tertiary : colors.text.light.tertiary;
+  const cardBgColor = isDark ? colors.background.dark.secondary : colors.background.light.secondary;
+
   return (
     <div
-      className={`pt-24 px-4 md:px-10 lg:px-20 ${
-        isDarkMode ? colors.background.dark.primary : colors.background.light.primary
-      } min-h-screen`}
-      style={{ paddingTop: spacing['4xl'] }}
+      className="pt-24 px-4 md:px-10 lg:px-20 min-h-screen"
+      style={{ 
+        paddingTop: spacing['5xl'],
+        paddingBottom: spacing['4xl'],
+        backgroundColor: bgColor
+      }}
     >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 300 }}
+        transition={{ duration: transitionDurations.normal, type: "spring", stiffness: 300 }}
         className="text-center mb-12"
-        style={{ marginBottom: spacing['2xl'] }}
       >
         <h1 
-          className={`text-4xl font-bold ${
-            isDarkMode ? colors.text.dark.primary : colors.text.light.primary
-          } mb-4`}
           style={{ 
             fontSize: typography.fontSize['4xl'],
             fontWeight: typography.fontWeight.bold,
-            marginBottom: spacing.md 
+            marginBottom: spacing.md,
+            color: textColor
           }}
         >
           Special Deals & Offers
         </h1>
         <p 
-          className={`${
-            isDarkMode ? colors.text.dark.secondary : colors.text.light.secondary
-          } max-w-2xl mx-auto`}
-          style={{ fontSize: typography.fontSize.lg }}
+          style={{ 
+            fontSize: typography.fontSize.lg,
+            color: textColorSecondary,
+            maxWidth: "42rem",
+            margin: "0 auto"
+          }}
         >
           Discover amazing discounts and limited-time offers on our products.
           Don't miss out on these exclusive deals!
@@ -145,20 +167,22 @@ const DealsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: transitionDurations.normal }}
           className="text-center py-4"
-          style={{ color: colors.error.DEFAULT }}
         >
-          <p>Error: {error}</p>
+          <p style={{ color: colors.error.DEFAULT }}>Error: {error}</p>
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleRetry}
-            className={`mt-2 px-4 py-2 rounded-md transition duration-200`}
             style={{
               backgroundColor: colors.primary.DEFAULT,
-              color: colors.text.light.primary,
+              color: "#FFFFFF",
               marginTop: spacing.sm,
               padding: `${spacing.sm} ${spacing.md}`,
+              borderRadius: borderRadius.md,
+              cursor: "pointer",
+              border: "none"
             }}
           >
             Retry
@@ -169,7 +193,7 @@ const DealsPage = () => {
       {/* Loading State */}
       {loading ? (
         <div 
-          className="flex justify-center items-center py-12"
+          className="flex justify-center items-center"
           style={{ padding: `${spacing['2xl']} 0` }}
         >
           <ClipLoader color={colors.primary.DEFAULT} size={50} />
@@ -186,25 +210,36 @@ const DealsPage = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.1 }}
-                className={`group relative overflow-hidden rounded-xl shadow-lg backdrop-blur-lg transition-all duration-300 ${
-                  isDarkMode ? 'bg-gray-800/80' : 'bg-white/80'
-                }`}
+                transition={{ 
+                  delay: index * 0.1,
+                  duration: transitionDurations.normal
+                }}
+                className="group relative overflow-hidden"
                 style={{
-                  borderRadius: spacing.xl,
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: cardBgColor,
+                  boxShadow: shadows.md
                 }}
               >
                 {/* Deal Badge */}
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
+                  transition={{ duration: transitionDurations.normal }}
                   className="absolute top-4 right-4 z-10"
                 >
                   <div 
-                    className="text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 shadow-lg"
                     style={{
                       background: `linear-gradient(to right, ${colors.error.DEFAULT}, ${colors.error.dark})`,
-                      padding: `${spacing.sm} ${spacing.md}`,
+                      padding: `${spacing.xs} ${spacing.md}`,
+                      borderRadius: borderRadius.full,
+                      color: "#FFFFFF",
+                      fontSize: typography.fontSize.sm,
+                      fontWeight: typography.fontWeight.semibold,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: spacing.xs,
+                      boxShadow: shadows.sm
                     }}
                   >
                     <FaPercent className="text-xs" />
@@ -218,46 +253,58 @@ const DealsPage = () => {
                     src={getImageSrc(deal)}
                     alt={deal.title}
                     effect="blur"
-                    className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover"
+                    style={{
+                      transform: "scale(1)",
+                      transition: `transform ${transitionDurations.slow}s ease-in-out`
+                    }}
+                    wrapperClassName="group-hover:scale-110"
                     placeholderSrc="https://placehold.co/600x400?text=Loading..."
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div 
+                    className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100" 
+                    style={{
+                      transition: `opacity ${transitionDurations.normal}s ease-in-out`
+                    }}
+                  />
                 </div>
 
                 {/* Deal Content */}
-                <div className="p-6" style={{ padding: spacing.lg }}>
+                <div style={{ padding: spacing.lg }}>
                   <h3
-                    className={`text-2xl font-bold mb-3 ${
-                      isDarkMode ? colors.text.dark.primary : colors.text.light.primary
-                    }`}
                     style={{
                       fontSize: typography.fontSize['2xl'],
                       fontWeight: typography.fontWeight.bold,
-                      marginBottom: spacing.md
+                      marginBottom: spacing.md,
+                      color: textColor
                     }}
                   >
                     {deal.title}
                   </h3>
                   <p
-                    className={`${
-                      isDarkMode ? colors.text.dark.secondary : colors.text.light.secondary
-                    } mb-4 line-clamp-2`}
-                    style={{ marginBottom: spacing.md }}
+                    style={{ 
+                      marginBottom: spacing.md, 
+                      color: textColorSecondary,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}
                   >
                     {deal.description}
                   </p>
 
                   {/* Deal Info */}
-                  <div className="space-y-3" style={{ gap: spacing.md }}>
-                    <div className="flex items-center gap-2 text-sm">
+                  <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, fontSize: typography.fontSize.sm }}>
                       <FaClock style={{ color: colors.primary.light }} />
-                      <span style={{ color: isDarkMode ? colors.text.dark.tertiary : colors.text.light.tertiary }}>
+                      <span style={{ color: textColorTertiary }}>
                         Valid from {formatDate(deal.startDate)} to {formatDate(deal.endDate)}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
+                    <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, fontSize: typography.fontSize.sm }}>
                       <FaGift style={{ color: colors.success.light }} />
-                      <span style={{ color: isDarkMode ? colors.text.dark.tertiary : colors.text.light.tertiary }}>
+                      <span style={{ color: textColorTertiary }}>
                         {deal.products?.length || 0} Products
                       </span>
                     </div>
@@ -267,17 +314,27 @@ const DealsPage = () => {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    transition={{ duration: transitionDurations.fast }}
                     onClick={() => handleViewProducts(deal.id)}
-                    className="mt-6 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg hover:shadow-lg transition-all duration-200"
                     style={{
                       marginTop: spacing.lg,
                       background: `linear-gradient(to right, ${colors.primary.DEFAULT}, ${colors.secondary.DEFAULT})`,
-                      color: colors.text.light.primary,
+                      color: "#FFFFFF",
                       padding: `${spacing.sm} ${spacing.md}`,
+                      borderRadius: borderRadius.lg,
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: spacing.sm,
+                      boxShadow: shadows.sm,
+                      fontWeight: typography.fontWeight.medium,
+                      border: "none",
+                      cursor: "pointer"
                     }}
                   >
                     View Products
-                    <FaArrowRight className="w-4 h-4" />
+                    <FaArrowRight style={{ width: "1rem", height: "1rem" }} />
                   </motion.button>
                 </div>
               </motion.div>
@@ -288,34 +345,39 @@ const DealsPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: transitionDurations.normal }}
           className="text-center py-12"
-          style={{ padding: `${spacing['2xl']} 0` }}
         >
           <div 
-            className="inline-block p-4 rounded-full mb-4"
             style={{
               padding: spacing.md,
-              backgroundColor: isDarkMode ? colors.background.dark.tertiary : colors.background.light.tertiary,
-              marginBottom: spacing.md
+              backgroundColor: isDark ? colors.background.dark.tertiary : colors.background.light.tertiary,
+              marginBottom: spacing.md,
+              display: "inline-block",
+              borderRadius: "50%"
             }}
           >
-            <FaTag className="w-12 h-12" style={{ color: isDarkMode ? colors.text.dark.tertiary : colors.text.light.tertiary }} />
+            <FaTag style={{ 
+              width: "3rem", 
+              height: "3rem", 
+              color: textColorTertiary 
+            }} />
           </div>
           <h3 
-            className={`text-xl font-semibold mb-2 ${
-              isDarkMode ? colors.text.dark.primary : colors.text.light.primary
-            }`}
             style={{
               fontSize: typography.fontSize['2xl'],
               fontWeight: typography.fontWeight.semibold,
-              marginBottom: spacing.sm
+              marginBottom: spacing.sm,
+              color: textColor
             }}
           >
             No Active Deals
           </h3>
           <p 
-            className={isDarkMode ? colors.text.dark.secondary : colors.text.light.secondary}
-            style={{ fontSize: typography.fontSize.base }}
+            style={{ 
+              fontSize: typography.fontSize.base,
+              color: textColorSecondary
+            }}
           >
             Check back later for exciting offers and discounts!
           </p>
