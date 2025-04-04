@@ -35,6 +35,7 @@ To run this project, the following software must be installed on your system:
 1. Clone the repository.
 2. Navigate to the **frontend** directory and install the required dependencies:
    ```bash
+   cd ShoppingFrontend
    npm install
    ```
 3. Start the backend server by running the main application file:
@@ -49,12 +50,8 @@ To run this project, the following software must be installed on your system:
    ```bash
    http://localhost:5173/
    ```
-6. Utilize Postman to test the APIs:
-   - `GET /api/products` – Retrieve a list of all products.
-   - `GET /api/products/{id}` – Fetch a product by its ID.
-   - `POST /api/products` – Add a new product.
 
-   Note: Preloaded data is available in the `data.sql` file. Product images are stored in byte format, and you can add or update images via the admin dashboard.
+   Note: Preloaded data is available in the `DataInitializer.java` file. Product images are in byte format so that it will not include in preload file, and also you can add or update images via the admin dashboard.
 
 ---
 
@@ -124,10 +121,6 @@ The following features are planned for future releases:
 To deploy the project, follow these steps:
 
 1. Start the backend application by executing `ShoppingBackendApplication.java`.
-2. Install the frontend dependencies:
-   ```bash
-   npm install
-   ```
 3. Launch the frontend:
    ```bash
    npm run dev
