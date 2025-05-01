@@ -9,8 +9,6 @@ import {
   FaRegHeart,
   FaShare,
   FaTag,
-  FaClock,
-  FaPercent,
   FaTruck,
   FaShieldAlt,
   FaArrowLeft,
@@ -39,42 +37,10 @@ const Product = () => {
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [activeDeals, setActiveDeals] = useState([]);
   const [currentDeal, setCurrentDeal] = useState(null);
   const [discountedPrice, setDiscountedPrice] = useState(0);
 
-  // Fetch active deals
-  const fetchActiveDeals = useCallback(async () => {
-    if (!token) return;
-
-    try {
-      const response = await fetch("http://localhost:8080/api/deals/active", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          const newToken = await refreshToken();
-          if (newToken) {
-            return fetchActiveDeals();
-          } else {
-            logout();
-            return;
-          }
-        }
-        throw new Error("Failed to fetch active deals");
-      }
-
-      const data = await response.json();
-      setActiveDeals(data);
-    } catch (err) {
-      toast.error("Failed to fetch active deals");
-    }
-  }, [token, refreshToken, logout]);
-
-  const fetchProduct = useCallback(async () => {
+  const fetchProductData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -89,14 +55,10 @@ const Product = () => {
         }
       }
 
-      const [productResponse, dealsResponse] = await Promise.all([
-        fetch(`http://localhost:8080/api/product/${id}`, {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        }),
-        fetch("http://localhost:8080/api/deals/active", {
-          headers: { Authorization: `Bearer ${currentToken}` },
-        }),
-      ]);
+      // First fetch the product data
+      const productResponse = await fetch(`http://localhost:8080/api/product/${id}`, {
+        headers: { Authorization: `Bearer ${currentToken}` },
+      });
 
       if (!productResponse.ok) {
         throw new Error("Failed to fetch product");
@@ -105,21 +67,33 @@ const Product = () => {
       const productData = await productResponse.json();
       setProduct(productData);
       setMainImage(productData.images?.[0]?.imageData || "");
+      
+      // Set the regular price as default
+      setDiscountedPrice(productData.price);
 
-      if (dealsResponse.ok) {
-        const dealsData = await dealsResponse.json();
-        const deal = dealsData.find((deal) =>
-          deal.products?.some((p) => p.id === productData.id)
-        );
-        if (deal) {
-          setCurrentDeal(deal);
-          setDiscountedPrice(
-            productData.price * (1 - deal.discountPercentage / 100)
+      // Then try to fetch deals (but don't block if this fails)
+      try {
+        const dealsResponse = await fetch("http://localhost:8080/api/deals/active", {
+          headers: { Authorization: `Bearer ${currentToken}` },
+        });
+
+        if (dealsResponse.ok) {
+          const dealsData = await dealsResponse.json();
+          const productDeal = dealsData.find((deal) =>
+            deal.products?.some((p) => p.id === productData.id)
           );
-        } else {
-          setDiscountedPrice(productData.price);
+
+          if (productDeal) {
+            setCurrentDeal(productDeal);
+            setDiscountedPrice(
+              productData.price * (1 - productDeal.discountPercentage / 100)
+            );
+          }
         }
+      } catch (dealsError) {
+        console.warn("Failed to fetch deals", dealsError);
       }
+
     } catch (err) {
       setError(err.message || "An error occurred while fetching product data");
       toast.error("Failed to load product details");
@@ -129,50 +103,8 @@ const Product = () => {
   }, [id, navigate, logout, isTokenExpired, token, refreshToken]);
 
   useEffect(() => {
-    fetchActiveDeals();
-  }, [fetchActiveDeals]);
-
-  useEffect(() => {
-    if (activeDeals.length > 0) {
-      fetchProduct();
-    }
-  }, [activeDeals, fetchProduct]);
-
-  // In Product.jsx
-  useEffect(() => {
-    const fetchProductWithDeals = async () => {
-      try {
-        const [productRes, dealsRes] = await Promise.all([
-          fetch(`http://localhost:8080/api/product/${id}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch("http://localhost:8080/api/deals/active", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
-
-        const productData = await productRes.json();
-        const dealsData = await dealsRes.json();
-
-        // Find deals containing this product
-        const productDeal = dealsData.find((deal) =>
-          deal.products?.some((p) => p.id === productData.id)
-        );
-
-        setProduct(productData);
-        setCurrentDeal(productDeal);
-        setDiscountedPrice(
-          productDeal
-            ? productData.price * (1 - productDeal.discountPercentage / 100)
-            : productData.price
-        );
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-
-    fetchProductWithDeals();
-  }, [id, token]);
+    fetchProductData();
+  }, [fetchProductData]);
 
   const handleImageChange = (imageUrl, index) => {
     setMainImage(imageUrl);
@@ -227,6 +159,10 @@ const Product = () => {
     }
   };
 
+  const getImageSrc = (imageData, imageType) => {
+    return imageData ? `data:${imageType};base64,${imageData}` : "/images/placeholder.webp";
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen">
@@ -254,6 +190,10 @@ const Product = () => {
         </motion.button>
       </motion.div>
     );
+  }
+
+  if (!product) {
+    return null;
   }
 
   return (
@@ -318,11 +258,7 @@ const Product = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                src={
-                  mainImage
-                    ? `data:${product.images?.[0]?.imageType};base64,${mainImage}`
-                    : "/images/placeholder.webp"
-                }
+                src={getImageSrc(mainImage, product.images?.[0]?.imageType)}
                 alt="Product"
                 className="w-full h-full object-cover"
                 onError={(e) => (e.target.src = "/images/placeholder.webp")}
@@ -377,7 +313,7 @@ const Product = () => {
                     onClick={() => handleImageChange(image.imageData, index)}
                   >
                     <img
-                      src={`data:${image.imageType};base64,${image.imageData}`}
+                      src={getImageSrc(image.imageData, image.imageType)}
                       alt={`Thumbnail ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
