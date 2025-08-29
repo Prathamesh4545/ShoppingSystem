@@ -86,7 +86,14 @@ const App = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/service" element={<Service />} />
           <Route path="/faq" element={<FAQ />} />
-          <Route path="/deals" element={<Deals />} />
+          <Route
+            path="/deals"
+            element={
+              <PrivateRoute roles={["USER", "ADMIN"]}>
+                <Deals />
+              </PrivateRoute>
+            }
+          />
           <Route path="/notifications-demo" element={<NotificationDemo />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/error" element={<Error />} />

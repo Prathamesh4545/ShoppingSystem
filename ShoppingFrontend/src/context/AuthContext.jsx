@@ -11,9 +11,9 @@ import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("user")) ?? null;
@@ -29,14 +29,17 @@ export const AuthProvider = ({ children }) => {
 
   const clearError = () => setError(null);
 
-  const logout = useCallback(() => {
+  const logout = useCallback((showToast = true) => {
+    const wasLoggedIn = Boolean(localStorage.getItem("user") && localStorage.getItem("token"));
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUser(null);
     setToken(null);
     setError(null);
     navigate("/", { replace: true });
-    toast.info("You have been logged out successfully.");
+    if (showToast && wasLoggedIn) {
+      toast.info("You have been logged out successfully.");
+    }
   }, [navigate]);
 
   const isTokenExpired = useCallback((token) => {
@@ -51,13 +54,14 @@ export const AuthProvider = ({ children }) => {
 
   const refreshToken = useCallback(async () => {
     try {
-      if (!token) {
+      const currentToken = localStorage.getItem("token");
+      if (!currentToken) {
         throw new Error("No token available to refresh");
       }
 
       const response = await axios.post(
         "http://localhost:8080/api/users/refresh-token",
-        { token },
+        { token: currentToken },
         {
           headers: { "Content-Type": "application/json" },
           skipAuthRefresh: true 
@@ -78,10 +82,10 @@ export const AuthProvider = ({ children }) => {
                       "Session expired. Please login again.";
       setError(errorMsg);
       toast.error(errorMsg);
-      logout();
+      logout(false);
       return null;
     }
-  }, [token, logout]);
+  }, []);
 
   const verifyAndSetAuthState = useCallback(async () => {
     const storedToken = localStorage.getItem("token");
@@ -96,26 +100,27 @@ export const AuthProvider = ({ children }) => {
       if (isTokenExpired(storedToken)) {
         const newToken = await refreshToken();
         if (!newToken) {
-          logout();
+          logout(false);
           return;
         }
       }
 
       const parsedUser = JSON.parse(storedUser);
-      parsedUser.roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : ["USER"];
+      parsedUser.roles = Array.isArray(parsedUser.roles) ? parsedUser.roles : parsedUser.role ? [parsedUser.role] : ["USER"];
+      
       setUser(parsedUser);
       setToken(storedToken);
     } catch (error) {
       console.error("Auth verification error:", error);
-      logout();
+      logout(false);
     } finally {
       setLoading(false);
     }
-  }, [isTokenExpired, refreshToken, logout]);
+  }, []);
 
   useEffect(() => {
     verifyAndSetAuthState();
-  }, [verifyAndSetAuthState]);
+  }, []);
 
   const isAuthenticated = useMemo(() => {
     return Boolean(user && token && !isTokenExpired(token));
@@ -123,9 +128,9 @@ export const AuthProvider = ({ children }) => {
 
   const hasRole = useCallback(
     (requiredRole) => {
-      return user?.roles?.includes(requiredRole) ?? false;
+      return user?.roles?.includes(requiredRole) || user?.role === requiredRole || false;
     },
-    [user?.roles]
+    [user?.roles, user?.role]
   );
 
   const login = useCallback(async (credentials) => {
@@ -150,14 +155,17 @@ export const AuthProvider = ({ children }) => {
       const userWithId = {
         ...userData,
         id: Number(userData.id),
-        roles: Array.isArray(roles) ? roles : ["USER"],
+        role: userData.role, // Keep the original role field
+        roles: Array.isArray(roles) ? roles : userData.role ? [userData.role] : ["USER"],
       };
 
       localStorage.setItem("user", JSON.stringify(userWithId));
       localStorage.setItem("token", authToken);
 
+      // Immediate state update
       setUser(userWithId);
       setToken(authToken);
+      
       toast.success("Login successful!");
 
       return { user: userWithId, token: authToken };
@@ -177,8 +185,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use(
       (config) => {
-        if (token && !config.skipAuthRefresh) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const currentToken = localStorage.getItem("token");
+        if (currentToken && !config.skipAuthRefresh) {
+          config.headers.Authorization = `Bearer ${currentToken}`;
         }
         return config;
       },
@@ -201,7 +210,7 @@ export const AuthProvider = ({ children }) => {
             }
           } catch (refreshError) {
             console.error("Failed to refresh token:", refreshError);
-            logout();
+            logout(false);
           }
         }
         
@@ -213,7 +222,7 @@ export const AuthProvider = ({ children }) => {
       axios.interceptors.request.eject(requestInterceptor);
       axios.interceptors.response.eject(responseInterceptor);
     };
-  }, [token, refreshToken, logout]);
+  }, []);
 
   const contextValue = useMemo(
     () => ({
@@ -248,8 +257,10 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-export const useAuth = () => {
+const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 };
+
+export { AuthContext, AuthProvider, useAuth };
