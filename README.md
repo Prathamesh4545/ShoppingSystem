@@ -44,26 +44,6 @@ To run this project, the following software must be installed on your system:
    cd ShoppingFrontend
    npm install
    ```
-4. Start the backend server by running the main application file:
-   ```bash
-   ShoppingBackendApplication.java
-   ```
-5. Launch the frontend application:
-   ```bash
-   npm run dev
-   ```
-6. Open your web browser and visit the application at:
-   ```bash
-   http://localhost:5173/
-   ```
-7. Then make registration.
-8. First, create the initial admin user manually using pgAdmin used - **ADMIN**. This is necessary because the system requires at least one admin account to access the admin panel.
-   Once the admin user is created, you can log in to the admin dashboard. From there, you’ll be able to:
-   ```bash
-   i) Add new employees through the dashboard.
-   ii) Assign admin privileges to employees as needed.
-   ```
-
 Perform all operations that are available only within the admin panel.
    Note: Preloaded data is available in the `DataInitializer.java` file. Product images are in byte format so that it will not include in preload file, and also you can add or update images via the admin dashboard.
 
@@ -71,7 +51,7 @@ Perform all operations that are available only within the admin panel.
 
 ## Development Phases
 
-### Phase 1: Initial Setup (Completed on 23-Jan-2025)
+### Phase 1: Initial Starting (Completed on 23-Jan-2025)
 
 Implemented the Product entity, along with repository, service, and controller layers.
 
@@ -135,14 +115,28 @@ The following features are planned for future releases:
 To deploy the project, follow these steps:
 
 1. Start the backend application by executing `ShoppingBackendApplication.java`.
-3. Launch the frontend:
+2. Launch the frontend:
    ```bash
    npm run dev
    ```
-
-### Admin Login Credentials:
-
-- **Username**: admin
-- **Password**: adminPassword
+3. Start the backend server by running the main application file:
+   ```bash
+   ShoppingBackendApplication.java
+   ```
+4. Launch the frontend application:
+   ```bash
+   npm run dev
+   ```
+5. Open your web browser and visit the application at:
+   ```bash
+   http://localhost:5173/
+   ```
+6. Then make registration.
+7. First, create the initial admin user manually using pgAdmin used - **ADMIN**. This is necessary because the system requires at least one admin account to access the admin panel.
+   Once the admin user is created, you can log in to the admin dashboard. From there, you’ll be able to:
+   ```bash
+   i) Add new employees through the dashboard.
+   ii) Assign admin privileges to employees as needed.
+   ```
 
 We encourage you to explore, test, and contribute to ShoppingSystem to help enhance its functionality and user experience. Thank you for your participation, and happy coding! 🚀
