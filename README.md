@@ -34,6 +34,7 @@ To run this project, the following software must be installed on your system:
 
 1. Clone the repository.
 2. Make Changes on postgresql database name as well as username and password - **application.properties**
+
    📂 File Located : **Spring Projects\Shopping-System\ShoppingBackend\src\main\resources**
    ```bash
    spring.datasource.url=jdbc:postgresql://localhost:5432/ShoppingSystemDB
