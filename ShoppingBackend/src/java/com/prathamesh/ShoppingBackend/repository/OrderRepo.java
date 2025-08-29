@@ -46,4 +46,10 @@ public interface OrderRepo extends JpaRepository<Orders, Long> {
            "WHERE o.userId = :userId " +
            "GROUP BY o.status")
     List<Map<String, Object>> getOrderCountByStatus(@Param("userId") Long userId);
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM Orders o WHERE o.status = 'CANCELLED'")
+    double calculateCancelledRevenue();
+
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0.0) FROM Orders o WHERE o.status = :status")
+    Double calculateRevenueByStatus(@Param("status") String status);
 }
