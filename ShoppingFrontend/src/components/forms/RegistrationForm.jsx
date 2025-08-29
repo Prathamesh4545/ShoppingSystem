@@ -83,13 +83,13 @@ const RegistrationForm = ({
       popup
       className={`${isDark ? "bg-gray-800" : "bg-white"}`}
     >
-      <Modal.Header className={`${isDark ? "bg-gray-800" : "bg-white"} p-4 text-xl font-semibold ${
-        isDark ? "text-white" : "text-gray-900"
+      <Modal.Header className={`${isDark ? "bg-gray-800" : "border-gray-200"} p-4 text-xl font-semibold ${
+        !isDark ? "text-white" : "text-gray-900"
       }`}>
         Create a new account
       </Modal.Header>
       
-      <Modal.Body className={`${isDark ? "bg-gray-800" : "bg-white"} p-6`}>
+      <Modal.Body className={`${isDark ? "bg-gray-800" : "border-gray-200"} p-6`}>
         <Formik
           initialValues={{
             firstName: "",
