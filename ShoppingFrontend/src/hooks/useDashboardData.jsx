@@ -4,7 +4,7 @@ import axios from 'axios';
 import { API_URL } from '../config/constants';
 
 export const useDashboardData = () => {
-  const { token } = useAuth();
+  const { token, hasRole, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dashboardData, setDashboardData] = useState({
@@ -31,6 +31,19 @@ export const useDashboardData = () => {
   });
 
   const fetchDashboardData = async () => {
+    // Authorization check
+    if (!isAuthenticated || !hasRole('ADMIN')) {
+      setError('Unauthorized access. Admin privileges required.');
+      setLoading(false);
+      return;
+    }
+
+    if (!token) {
+      setError('Authentication token missing.');
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const [statsResponse, salesResponse, categoryResponse] = await Promise.all([
@@ -75,10 +88,12 @@ export const useDashboardData = () => {
     }
   };
 
-  // Fetch data initially
+  // Fetch data initially with authorization check
   useEffect(() => {
-    fetchDashboardData();
-  }, [token]);
+    if (isAuthenticated && hasRole('ADMIN') && token) {
+      fetchDashboardData();
+    }
+  }, [token, isAuthenticated, hasRole]);
 
   // Set up polling for real-time updates (every 5 minutes)
   useEffect(() => {

@@ -9,6 +9,12 @@ export const ErrorTypes = {
   UNKNOWN: 'UNKNOWN'
 };
 
+// Secure configuration - use environment variables
+const getApiConfig = () => ({
+  baseUrl: process.env.REACT_APP_API_URL || 'http://localhost:8080',
+  timeout: process.env.REACT_APP_API_TIMEOUT || 10000
+});
+
 // Error messages for different scenarios
 const ErrorMessages = {
   [ErrorTypes.NETWORK]: {
@@ -65,9 +71,16 @@ const determineErrorType = (error) => {
   return ErrorTypes.UNKNOWN;
 };
 
+// Sanitize input to prevent log injection
+const sanitizeForLog = (input) => {
+  if (typeof input !== 'string') return input;
+  return encodeURIComponent(input).replace(/[\r\n]/g, '');
+};
+
 // Main error handler function
 export const handleError = (error, customMessage = null) => {
-  console.error('Error:', error);
+  const sanitizedMessage = customMessage ? sanitizeForLog(customMessage) : null;
+  console.error('Error:', sanitizedMessage || (error?.message ? sanitizeForLog(error.message) : error));
 
   const errorType = determineErrorType(error);
   const errorConfig = ErrorMessages[errorType];

@@ -9,6 +9,7 @@ import React, {
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
+import { createSecureAxiosInstance, initializeCSRFProtection } from "../utils/csrfProtection";
 
 export const UserContext = createContext();
 
@@ -26,6 +27,12 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+  const [secureAxios] = useState(() => createSecureAxiosInstance());
+
+  // Initialize CSRF protection
+  useEffect(() => {
+    initializeCSRFProtection();
+  }, []);
 
   const clearError = () => setError(null);
 

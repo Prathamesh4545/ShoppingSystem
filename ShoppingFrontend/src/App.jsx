@@ -4,6 +4,8 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./components/Auth/PrivateRoute.jsx";
 import AdminRoute from "./components/Auth/AdminRoute.jsx";
+import FloatingActionButton from "./components/common/FloatingActionButton";
+import { NotificationProvider } from "./context/NotificationContext";
 
 // Common Components
 import Navbar from "./components/common/Navbar";
@@ -38,6 +40,7 @@ import DealForm from "./components/MangeDeals/DealForm";
 import AdminOrderManager from "./components/Orders/AdminOrderManager";
 import UserProfile from "./components/Users/UserProfile.jsx";
 import Users from "./components/Users/Users.jsx";
+import NotificationDemo from "./components/common/NotificationDemo.jsx";
 
 const App = () => {
   const location = useLocation();
@@ -69,9 +72,10 @@ const App = () => {
   );
 
   return (
-    <div className={isAdminRoute ? "min-h-screen bg-gray-900" : ""}>
-      {/* Show Navbar only for non-admin routes */}
-      {!isAdminRoute && <Navbar />}
+    <NotificationProvider>
+      <div className={`${isAdminRoute ? "min-h-screen bg-gray-900" : ""} relative`}>
+        {/* Show Navbar only for non-admin routes */}
+        {!isAdminRoute && <Navbar />}
 
       <Suspense
         fallback={isAdminRoute ? <AdminLoadingSpinner /> : <LoadingSpinner />}
@@ -83,6 +87,7 @@ const App = () => {
           <Route path="/service" element={<Service />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/deals" element={<Deals />} />
+          <Route path="/notifications-demo" element={<NotificationDemo />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/error" element={<Error />} />
           <Route path="/product/:id" element={<Product />} />
@@ -93,7 +98,7 @@ const App = () => {
             element={
               <PrivateRoute roles={["USER", "ADMIN"]}>
                 <Cart />
-              </PrivateRoute>
+              </PrivateRoute> 
             }
           />
 
@@ -251,8 +256,13 @@ const App = () => {
         draggable
         pauseOnHover
         theme="light"
+        className="z-50"
       />
-    </div>
+      
+        {/* Global Components */}
+        {!isAdminRoute && <FloatingActionButton />}
+      </div>
+    </NotificationProvider>
   );
 };
 
