@@ -27,7 +27,7 @@ import axios from "axios";
 import { formatDate } from "../../utils/dateUtils";
 
 const OrdersList = () => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { user, token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -59,7 +59,10 @@ const OrdersList = () => {
       });
 
       if (response.data) {
-        setOrders(Array.isArray(response.data) ? response.data : []);
+        const ordersData = Array.isArray(response.data) ? response.data : [];
+        // Filter out any orders that might be marked as deleted
+        const activeOrders = ordersData.filter(order => order.status !== 'DELETED');
+        setOrders(activeOrders);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -77,39 +80,54 @@ const OrdersList = () => {
     }
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("Are you sure you want to delete this order?")) {
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
       return;
     }
 
     try {
-      const response = await axios.delete(`${API_URL}/orders/${orderId}`, {
+      await axios.put(`${API_URL}/orders/${orderId}/cancel`, {}, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         }
       });
 
-      if (response.status === 204) {
-        setOrders(orders.filter(order => order.id !== orderId));
-        toast.success("Order deleted successfully");
-        setShowDeleteModal(false);
-      }
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: 'CANCELLED' } : order
+      ));
+      toast.success("Order cancelled successfully!");
     } catch (error) {
-      console.error("Error deleting order:", error);
+      console.error("Cancel error:", error);
+      toast.error("Failed to cancel order. Please try again.");
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    try {
+      await axios.delete(`${API_URL}/orders/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setOrders(orders.filter(order => order.id !== orderId));
+      toast.success("Order deleted successfully!");
+      setShowDeleteModal(false);
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error("Delete error:", error);
       
-      if (error.response?.status === 401) {
-        toast.error("Your session has expired. Please log in again.");
-        navigate("/login");
-      } else if (error.response?.status === 403) {
-        toast.error("You do not have permission to delete this order.");
-      } else if (error.response?.status === 404) {
-        toast.error("Order not found.");
+      if (error.response?.status === 404) {
         setOrders(orders.filter(order => order.id !== orderId));
+        toast.warning("Order not found or already deleted.");
+      } else if (error.response?.status === 403) {
+        toast.error("You don't have permission to delete this order.");
       } else {
-        toast.error(error.response?.data?.message || "Failed to delete order");
+        toast.error("Failed to delete order. Please try again.");
       }
+      
+      setShowDeleteModal(false);
+      setSelectedOrder(null);
     }
   };
 
@@ -205,23 +223,44 @@ const OrdersList = () => {
   }
 
   return (
-    <div className={`min-h-screen pt-20 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4 md:mb-0">
-            My Orders
-          </h1>
+    <div className={`pt-16 min-h-screen ${
+      isDarkMode 
+        ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+        : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24" style={{marginTop: '50px'}}>
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+        >
+          <div className="flex items-center gap-4 mb-4 md:mb-0">
+            <div className={`p-3 rounded-xl ${isDarkMode ? "bg-gray-800 shadow-lg" : "bg-white shadow-md"}`}>
+              <FaShoppingBag className="w-8 h-8 text-blue-500" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                My Orders
+              </h1>
+              <p className="text-gray-500 dark:text-gray-400">Track and manage your orders</p>
+            </div>
+          </div>
           <Link
             to="/"
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
             <FaShoppingBag className="mr-2" />
             Continue Shopping
           </Link>
-        </div>
+        </motion.div>
 
         {/* Filters and Search */}
-        <div className={`rounded-xl p-6 shadow-lg mb-8 ${isDark ? "bg-gray-800" : "bg-white"}`}>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={`rounded-xl p-6 shadow-lg mb-8 backdrop-blur-sm ${isDarkMode ? "bg-gray-800/80 border border-gray-700" : "bg-white/80 border border-gray-200"}`}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="relative">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -231,7 +270,7 @@ const OrdersList = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
-                  isDark
+                  isDarkMode
                     ? "bg-gray-700 border-gray-600 text-white"
                     : "bg-white border-gray-300 text-gray-900"
                 } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -241,7 +280,7 @@ const OrdersList = () => {
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
               className={`px-4 py-2 rounded-lg border ${
-                isDark
+                isDarkMode
                   ? "bg-gray-700 border-gray-600 text-white"
                   : "bg-white border-gray-300 text-gray-900"
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -257,7 +296,7 @@ const OrdersList = () => {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className={`px-4 py-2 rounded-lg border ${
-                isDark
+                isDarkMode
                   ? "bg-gray-700 border-gray-600 text-white"
                   : "bg-white border-gray-300 text-gray-900"
               } focus:outline-none focus:ring-2 focus:ring-blue-500`}
@@ -268,14 +307,14 @@ const OrdersList = () => {
               <option value="lowest">Lowest Amount</option>
             </select>
           </div>
-        </div>
+        </motion.div>
 
         <div className="space-y-6">
           {filteredOrders.length === 0 ? (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`rounded-xl p-12 shadow-lg text-center ${isDark ? "bg-gray-800" : "bg-white"}`}
+              className={`rounded-xl p-12 shadow-lg text-center backdrop-blur-sm border ${isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"}`}
             >
               <FaShoppingBag className="w-16 h-16 mx-auto text-gray-400 mb-6" />
               <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">
@@ -288,7 +327,7 @@ const OrdersList = () => {
               </p>
               <Link
                 to="/products"
-                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+                className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 <FaShoppingBag className="mr-2" />
                 Browse Products
@@ -303,9 +342,9 @@ const OrdersList = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ delay: index * 0.1 }}
-                  className={`block rounded-xl p-6 shadow-lg transition-all duration-200 hover:shadow-xl ${
-                    isDark ? "bg-gray-800 hover:bg-gray-750" : "bg-white hover:bg-gray-50"
-                  }`}
+                  className={`block rounded-xl p-6 shadow-lg transition-all duration-200 hover:shadow-xl backdrop-blur-sm border ${
+                    isDarkMode ? "bg-gray-800/80 hover:bg-gray-700/80 border-gray-700" : "bg-white/80 hover:bg-gray-50/80 border-gray-200"
+                  } hover:scale-[1.02] hover:-translate-y-1`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <Link to={`/orders/${order.id}`} className="flex-1">
@@ -331,6 +370,15 @@ const OrdersList = () => {
                       <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)} bg-opacity-10`}>
                         {order.status}
                       </span>
+                      {order.status === "PENDING" && (
+                        <button
+                          onClick={() => handleCancelOrder(order.id)}
+                          className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition-colors duration-200"
+                          title="Cancel order"
+                        >
+                          Cancel
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setSelectedOrder(order);
@@ -397,20 +445,28 @@ const OrdersList = () => {
                 Confirm Delete
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Are you sure you want to delete order #{selectedOrder.id}?
+                Are you sure you want to delete order #{selectedOrder.id}? This action cannot be undone.
               </p>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  <strong>Note:</strong> Only orders that haven't been processed can be deleted.
+                </p>
+              </div>
               <div className="flex justify-end space-x-4">
                 <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setSelectedOrder(null);
+                  }}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleDeleteOrder(selectedOrder.id)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
                 >
-                  Delete
+                  Delete Order
                 </button>
               </div>
             </div>

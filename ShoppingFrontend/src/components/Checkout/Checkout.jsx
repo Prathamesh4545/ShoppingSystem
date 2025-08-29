@@ -13,7 +13,7 @@ import { FaMapMarkerAlt, FaCreditCard, FaLock, FaUser, FaArrowLeft, FaShieldAlt 
 import { motion, AnimatePresence } from "framer-motion";
 
 const Checkout = () => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { cart, totalPrice, clearCart } = useCart();
   const { user, token, isAuthenticated } = useAuth();
   const { guestUser, createGuestUser } = useGuest();
@@ -167,7 +167,11 @@ const Checkout = () => {
   };
 
   return (
-    <div className={`min-h-screen pt-20 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`pt-16 min-h-screen ${
+      isDarkMode 
+        ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+        : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         {/* Header */}
         <motion.div
@@ -182,14 +186,18 @@ const Checkout = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(-1)}
               className={`p-2 rounded-full transition-colors duration-200 ${
-                isDark
+                isDarkMode
                   ? 'text-gray-300 hover:text-white hover:bg-gray-700'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
               }`}
             >
               <FaArrowLeft className="w-5 h-5" />
             </motion.button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className={`text-4xl font-bold bg-gradient-to-r bg-clip-text text-transparent ${
+              isDarkMode 
+                ? "from-sky-400 via-purple-400 to-sky-400" 
+                : "from-sky-600 via-purple-600 to-sky-600"
+            }`}>
               Checkout
             </h1>
           </div>
@@ -221,7 +229,7 @@ const Checkout = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ type: "spring", stiffness: 300 }}
                   className={`rounded-xl p-6 shadow-lg backdrop-blur-lg ${
-                    isDark ? "bg-gray-800/80" : "bg-white/80"
+                    isDarkMode ? "bg-gray-800/80" : "bg-white/80"
                   }`}
                 >
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
@@ -239,7 +247,7 @@ const Checkout = () => {
                           className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
                             selectedAddress?.id === address.id
                               ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
-                              : isDark
+                              : isDarkMode
                               ? "border-gray-700 hover:border-gray-600"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
@@ -299,7 +307,7 @@ const Checkout = () => {
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ type: "spring", stiffness: 300 }}
                   className={`rounded-xl p-6 shadow-lg backdrop-blur-lg ${
-                    isDark ? "bg-gray-800/80" : "bg-white/80"
+                    isDarkMode ? "bg-gray-800/80" : "bg-white/80"
                   }`}
                 >
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
@@ -314,7 +322,7 @@ const Checkout = () => {
                       className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
                         selectedPayment === "cod"
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
-                          : isDark
+                          : isDarkMode
                           ? "border-gray-700 hover:border-gray-600"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
@@ -339,7 +347,7 @@ const Checkout = () => {
                       className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all duration-200 ${
                         selectedPayment === "card"
                           ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md"
-                          : isDark
+                          : isDarkMode
                           ? "border-gray-700 hover:border-gray-600"
                           : "border-gray-200 hover:border-gray-300"
                       }`}
@@ -404,7 +412,7 @@ const Checkout = () => {
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300 }}
               className={`rounded-xl p-6 shadow-xl max-w-md w-full ${
-                isDark ? "bg-gray-800" : "bg-white"
+                isDarkMode ? "bg-gray-800" : "bg-white"
               }`}
             >
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useTheme } from "../context/ThemeContext";
+import React, { useState, useContext } from "react";
+import ThemeContext from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaUser,
@@ -12,8 +12,7 @@ import {
 } from "react-icons/fa";
 
 const Contact = () => {
-  const theme = useTheme();
-  const { isDark, colors, spacing, typography, borderRadius, shadows, transitions } = theme;
+  const { isDarkMode } = useContext(ThemeContext);
   
   const [agreed, setAgreed] = useState(false);
   const [formData, setFormData] = useState({
@@ -28,22 +27,6 @@ const Contact = () => {
   const [errors, setErrors] = useState({});
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Transition durations in seconds for Framer Motion
-  const transitionDurations = {
-    fast: 0.15,
-    normal: 0.25,
-    slow: 0.35
-  };
-  
-  // Theme-based colors
-  const bgColor = isDark ? colors.background.dark.primary : colors.background.light.primary;
-  const cardBgColor = isDark ? colors.background.dark.secondary : colors.background.light.secondary;
-  const inputBgColor = isDark ? colors.background.dark.tertiary : colors.background.light.primary;
-  const inputBorderColor = isDark ? 'transparent' : colors.text.light.tertiary;
-  const textColor = isDark ? colors.text.dark.primary : colors.text.light.primary;
-  const textColorSecondary = isDark ? colors.text.dark.secondary : colors.text.light.secondary;
-  const placeholderColor = isDark ? colors.text.dark.tertiary : colors.text.light.tertiary;
 
   // Handle form input change
   const handleChange = (event) => {
@@ -113,28 +96,16 @@ const Contact = () => {
     <div>
       <label
         htmlFor={name}
-        style={{
-          display: "block",
-          fontSize: typography.fontSize.sm,
-          fontWeight: typography.fontWeight.medium,
-          marginBottom: spacing.sm,
-          color: textColor
-        }}
+        className={`block text-sm font-medium mb-2 ${
+          isDarkMode ? 'text-white' : 'text-gray-900'
+        }`}
       >
         {label}
       </label>
-      <div style={{ position: "relative" }}>
-        <div 
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: spacing.md,
-            transform: type === "textarea" ? "translateY(0)" : "translateY(-50%)",
-            color: textColorSecondary,
-            pointerEvents: "none",
-            marginTop: type === "textarea" ? spacing.sm : 0
-          }}
-        >
+      <div className="relative">
+        <div className={`absolute ${type === 'textarea' ? 'top-4' : 'top-1/2 -translate-y-1/2'} left-4 pointer-events-none ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           {icon}
         </div>
         {type === "textarea" ? (
@@ -145,20 +116,11 @@ const Contact = () => {
             onChange={handleChange}
             rows={4}
             placeholder={placeholder}
-            style={{
-              display: "block",
-              width: "100%",
-              paddingLeft: spacing['2xl'],
-              paddingRight: spacing.md,
-              paddingTop: spacing.md,
-              paddingBottom: spacing.md,
-              borderRadius: borderRadius.lg,
-              border: `1px solid ${inputBorderColor}`,
-              backgroundColor: inputBgColor,
-              color: textColor,
-              resize: "vertical",
-              fontSize: typography.fontSize.base
-            }}
+            className={`block w-full pl-12 pr-4 py-3 rounded-lg border resize-vertical text-base ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            }`}
           />
         ) : (
           <input
@@ -168,19 +130,11 @@ const Contact = () => {
             value={formData[name]}
             onChange={handleChange}
             placeholder={placeholder}
-            style={{
-              display: "block",
-              width: "100%",
-              paddingLeft: spacing['2xl'],
-              paddingRight: spacing.md,
-              paddingTop: spacing.md,
-              paddingBottom: spacing.md,
-              borderRadius: borderRadius.lg,
-              border: `1px solid ${inputBorderColor}`,
-              backgroundColor: inputBgColor,
-              color: textColor,
-              fontSize: typography.fontSize.base
-            }}
+            className={`block w-full pl-12 pr-4 py-3 rounded-lg border text-base ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+            }`}
           />
         )}
       </div>
@@ -190,16 +144,10 @@ const Contact = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: transitionDurations.fast }}
-            style={{
-              marginTop: spacing.xs,
-              fontSize: typography.fontSize.sm,
-              color: colors.error.DEFAULT,
-              display: "flex",
-              alignItems: "center"
-            }}
+            transition={{ duration: 0.15 }}
+            className="mt-1 text-sm text-red-500 flex items-center"
           >
-            <FaExclamationCircle style={{ marginRight: spacing.xs }} />
+            <FaExclamationCircle className="mr-1" />
             {errors[name]}
           </motion.p>
         )}
@@ -209,57 +157,39 @@ const Contact = () => {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        paddingTop: spacing['4xl'],
-        paddingBottom: spacing['2xl'],
-        backgroundColor: bgColor
-      }}
+      className={`pt-16 min-h-screen ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+      }`}
     >
-      <div
-        style={{
-          maxWidth: "64rem",
-          margin: "0 auto",
-          padding: `0 ${spacing.md}`
-        }}
-      >
+      <div className="py-16">
+        <div className="max-w-4xl mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: transitionDurations.normal }}
-          style={{
-            boxShadow: shadows.lg,
-            borderRadius: borderRadius.lg,
-            padding: spacing.xl,
-            backgroundColor: cardBgColor
-          }}
+          transition={{ duration: 0.3 }}
+          className={`backdrop-blur-md border rounded-xl p-8 ${
+            isDarkMode 
+              ? "bg-white/10 border-white/20 shadow-2xl" 
+              : "bg-white/70 border-white/30 shadow-xl"
+          }`}
         >
           {/* Title Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: transitionDurations.normal, delay: 0.2 }}
-            style={{
-              textAlign: "center",
-              marginBottom: spacing['2xl']
-            }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="text-center mb-8"
           >
-            <h1 
-              style={{
-                fontSize: typography.fontSize['4xl'],
-                fontWeight: typography.fontWeight.bold,
-                color: textColor
-              }}
-            >
+            <h1 className={`text-4xl font-bold mb-4 ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               Contact Us
             </h1>
-            <p 
-              style={{
-                marginTop: spacing.md,
-                fontSize: typography.fontSize.lg,
-                color: textColorSecondary
-              }}
-            >
+            <p className={`text-lg ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
             </p>
           </motion.div>
@@ -270,31 +200,17 @@ const Contact = () => {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: transitionDurations.normal }}
-                style={{
-                  marginBottom: spacing.lg,
-                  padding: spacing.md,
-                  backgroundColor: colors.success.light + '33', // Adding 33 for transparency
-                  color: colors.success.dark,
-                  borderRadius: borderRadius.lg,
-                  display: "flex",
-                  alignItems: "center"
-                }}
+                transition={{ duration: 0.3 }}
+                className="mb-6 p-4 bg-green-100 text-green-800 rounded-lg flex items-center"
               >
-                <FaCheckCircle style={{ marginRight: spacing.sm }} />
+                <FaCheckCircle className="mr-2" />
                 Thank you! Your message has been sent successfully.
               </motion.div>
             )}
           </AnimatePresence>
 
-          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: spacing.lg }}>
-            <div 
-              style={{ 
-                display: "grid", 
-                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", 
-                gap: spacing.lg 
-              }}
-            >
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {renderInput(
                 "firstName",
                 "First Name",
@@ -343,25 +259,21 @@ const Contact = () => {
               "Enter your message"
             )}
 
-            <div style={{ display: "flex", alignItems: "flex-start", gap: spacing.md }}>
+            <div className="flex items-start gap-4">
               <button
                 type="button"
                 onClick={() => setAgreed(!agreed)}
-                style={{
-                  marginTop: spacing.xs,
-                  flexShrink: 0,
-                  height: "20px",
-                  width: "20px",
-                  borderRadius: borderRadius.sm,
-                  border: `1px solid ${isDark ? colors.text.dark.tertiary : colors.text.light.tertiary}`,
-                  backgroundColor: agreed ? colors.primary.DEFAULT : 'transparent',
-                  cursor: "pointer",
-                  padding: 0
-                }}
+                className={`mt-1 flex-shrink-0 h-5 w-5 rounded border cursor-pointer p-0 ${
+                  agreed 
+                    ? 'bg-blue-600 border-blue-600' 
+                    : isDarkMode 
+                    ? 'bg-transparent border-gray-600' 
+                    : 'bg-transparent border-gray-300'
+                }`}
               >
                 {agreed && (
                   <svg
-                    style={{ height: "100%", width: "100%", color: "#FFFFFF" }}
+                    className="h-full w-full text-white"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                   >
@@ -376,31 +288,20 @@ const Contact = () => {
               <div>
                 <label
                   htmlFor="agreement"
-                  style={{
-                    fontSize: typography.fontSize.sm,
-                    fontWeight: typography.fontWeight.medium,
-                    color: textColor
-                  }}
+                  className={`text-sm font-medium ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}
                 >
                   I agree to the{" "}
                   <a
                     href="#"
-                    style={{
-                      color: colors.primary.DEFAULT,
-                      transition: transitions.fast
-                    }}
+                    className="text-blue-600 hover:text-blue-700 transition-colors"
                   >
                     privacy policy
                   </a>
                 </label>
                 {errors.agreed && (
-                  <p 
-                    style={{
-                      marginTop: spacing.xs,
-                      color: colors.error.DEFAULT,
-                      fontSize: typography.fontSize.sm
-                    }}
-                  >
+                  <p className="mt-1 text-red-500 text-sm">
                     {errors.agreed}
                   </p>
                 )}
@@ -412,35 +313,16 @@ const Contact = () => {
               disabled={isSubmitting || !agreed}
               whileHover={!isSubmitting && agreed ? { scale: 1.02 } : {}}
               whileTap={!isSubmitting && agreed ? { scale: 0.98 } : {}}
-              transition={{ duration: transitionDurations.fast }}
-              style={{
-                width: "100%",
-                padding: `${spacing.md} ${spacing.lg}`,
-                borderRadius: borderRadius.lg,
-                backgroundColor: isSubmitting || !agreed ? colors.text.light.tertiary : colors.primary.DEFAULT,
-                color: "#FFFFFF",
-                fontWeight: typography.fontWeight.medium,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: spacing.sm,
-                cursor: isSubmitting || !agreed ? "not-allowed" : "pointer",
-                border: "none",
-                transition: transitions.normal
-              }}
+              transition={{ duration: 0.15 }}
+              className={`w-full px-6 py-3 rounded-lg text-white font-medium flex items-center justify-center gap-2 border-none transition-all duration-200 ${
+                isSubmitting || !agreed 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+              }`}
             >
               {isSubmitting ? (
                 <>
-                  <div 
-                    style={{
-                      width: "20px",
-                      height: "20px",
-                      border: "2px solid #FFFFFF",
-                      borderTopColor: "transparent",
-                      borderRadius: "50%",
-                      animation: "spin 1s linear infinite"
-                    }}
-                  />
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Sending...</span>
                 </>
               ) : (
@@ -452,17 +334,9 @@ const Contact = () => {
             </motion.button>
           </form>
         </motion.div>
+        </div>
       </div>
-      <style jsx>{`
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
+
     </div>
   );
 };

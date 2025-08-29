@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useContext,
+} from "react";
 import { ClipLoader } from "react-spinners";
 import { useAuth } from "../context/AuthContext";
 import { format, parseISO, isAfter, isBefore } from "date-fns";
@@ -8,7 +14,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { isTokenExpired } from "../utils/auth";
-import { useTheme } from "../context/ThemeContext";
+import ThemeContext from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FaTag,
@@ -19,27 +25,13 @@ import {
 } from "react-icons/fa";
 
 const DealsPage = () => {
-  const theme = useTheme();
-  const { isDark, colors, spacing, typography, borderRadius, shadows, transitions } = theme;
-  
+  const { isDarkMode } = useContext(ThemeContext);
+
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { token, logout } = useAuth();
   const navigate = useNavigate();
-
-  // Parse transition durations to milliseconds for Framer Motion
-  const getTransitionDuration = (transitionString) => {
-    // If transitions.normal is "250ms ease-in-out", extract just the number
-    const match = transitionString.match(/(\d+)ms/);
-    return match ? Number(match[1]) / 1000 : 0.3; // Convert to seconds or default to 0.3
-  };
-
-  const transitionDurations = {
-    fast: getTransitionDuration(transitions.fast) || 0.15,
-    normal: getTransitionDuration(transitions.normal) || 0.25,
-    slow: getTransitionDuration(transitions.slow) || 0.35
-  };
 
   const fetchDeals = useCallback(async () => {
     if (isTokenExpired(token)) {
@@ -116,273 +108,190 @@ const DealsPage = () => {
     return "https://placehold.co/600x400?text=No+Image";
   };
 
-  // Determine background and text colors based on theme
-  const bgColor = isDark ? colors.background.dark.primary : colors.background.light.primary;
-  const textColor = isDark ? colors.text.dark.primary : colors.text.light.primary;
-  const textColorSecondary = isDark ? colors.text.dark.secondary : colors.text.light.secondary;
-  const textColorTertiary = isDark ? colors.text.dark.tertiary : colors.text.light.tertiary;
-  const cardBgColor = isDark ? colors.background.dark.secondary : colors.background.light.secondary;
-
   return (
     <div
-      className="pt-24 px-4 md:px-10 lg:px-20 min-h-screen"
-      style={{ 
-        paddingTop: spacing['5xl'],
-        paddingBottom: spacing['4xl'],
-        backgroundColor: bgColor
-      }}
+      className={`pt-16 min-h-screen ${
+        isDarkMode
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900"
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+      }`}
     >
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: transitionDurations.normal, type: "spring", stiffness: 300 }}
-        className="text-center mb-12"
-      >
-        <h1 
-          style={{ 
-            fontSize: typography.fontSize['4xl'],
-            fontWeight: typography.fontWeight.bold,
-            marginBottom: spacing.md,
-            color: textColor
-          }}
-        >
-          Special Deals & Offers
-        </h1>
-        <p 
-          style={{ 
-            fontSize: typography.fontSize.lg,
-            color: textColorSecondary,
-            maxWidth: "42rem",
-            margin: "0 auto"
-          }}
-        >
-          Discover amazing discounts and limited-time offers on our products.
-          Don't miss out on these exclusive deals!
-        </p>
-      </motion.div>
-
-      {/* Error Message */}
-      {error && (
+      <div className="px-4 md:px-10 lg:px-20 py-12 max-w-7xl mx-auto">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: transitionDurations.normal }}
-          className="text-center py-4"
+          transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+          className="text-center mb-12"
         >
-          <p style={{ color: colors.error.DEFAULT }}>Error: {error}</p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleRetry}
-            style={{
-              backgroundColor: colors.primary.DEFAULT,
-              color: "#FFFFFF",
-              marginTop: spacing.sm,
-              padding: `${spacing.sm} ${spacing.md}`,
-              borderRadius: borderRadius.md,
-              cursor: "pointer",
-              border: "none"
-            }}
-          >
-            Retry
-          </motion.button>
-        </motion.div>
-      )}
-
-      {/* Loading State */}
-      {loading ? (
-        <div 
-          className="flex justify-center items-center"
-          style={{ padding: `${spacing['2xl']} 0` }}
-        >
-          <ClipLoader color={colors.primary.DEFAULT} size={50} />
-        </div>
-      ) : Array.isArray(activeDeals) && activeDeals.length > 0 ? (
-        <div 
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-          style={{ gap: spacing.lg }}
-        >
-          <AnimatePresence>
-            {activeDeals.map((deal, index) => (
-              <motion.div
-                key={deal.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ 
-                  delay: index * 0.1,
-                  duration: transitionDurations.normal
-                }}
-                className="group relative overflow-hidden"
-                style={{
-                  borderRadius: borderRadius.xl,
-                  backgroundColor: cardBgColor,
-                  boxShadow: shadows.md
-                }}
-              >
-                {/* Deal Badge */}
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: transitionDurations.normal }}
-                  className="absolute top-4 right-4 z-10"
-                >
-                  <div 
-                    style={{
-                      background: `linear-gradient(to right, ${colors.error.DEFAULT}, ${colors.error.dark})`,
-                      padding: `${spacing.xs} ${spacing.md}`,
-                      borderRadius: borderRadius.full,
-                      color: "#FFFFFF",
-                      fontSize: typography.fontSize.sm,
-                      fontWeight: typography.fontWeight.semibold,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: spacing.xs,
-                      boxShadow: shadows.sm
-                    }}
-                  >
-                    <FaPercent className="text-xs" />
-                    {deal.discountPercentage}% OFF
-                  </div>
-                </motion.div>
-
-                {/* Deal Image */}
-                <div className="relative h-48 overflow-hidden">
-                  <LazyLoadImage
-                    src={getImageSrc(deal)}
-                    alt={deal.title}
-                    effect="blur"
-                    className="w-full h-full object-cover"
-                    style={{
-                      transform: "scale(1)",
-                      transition: `transform ${transitionDurations.slow}s ease-in-out`
-                    }}
-                    wrapperClassName="group-hover:scale-110"
-                    placeholderSrc="https://placehold.co/600x400?text=Loading..."
-                  />
-                  <div 
-                    className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100" 
-                    style={{
-                      transition: `opacity ${transitionDurations.normal}s ease-in-out`
-                    }}
-                  />
-                </div>
-
-                {/* Deal Content */}
-                <div style={{ padding: spacing.lg }}>
-                  <h3
-                    style={{
-                      fontSize: typography.fontSize['2xl'],
-                      fontWeight: typography.fontWeight.bold,
-                      marginBottom: spacing.md,
-                      color: textColor
-                    }}
-                  >
-                    {deal.title}
-                  </h3>
-                  <p
-                    style={{ 
-                      marginBottom: spacing.md, 
-                      color: textColorSecondary,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden"
-                    }}
-                  >
-                    {deal.description}
-                  </p>
-
-                  {/* Deal Info */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, fontSize: typography.fontSize.sm }}>
-                      <FaClock style={{ color: colors.primary.light }} />
-                      <span style={{ color: textColorTertiary }}>
-                        Valid from {formatDate(deal.startDate)} to {formatDate(deal.endDate)}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, fontSize: typography.fontSize.sm }}>
-                      <FaGift style={{ color: colors.success.light }} />
-                      <span style={{ color: textColorTertiary }}>
-                        {deal.products?.length || 0} Products
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* View Products Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ duration: transitionDurations.fast }}
-                    onClick={() => handleViewProducts(deal.id)}
-                    style={{
-                      marginTop: spacing.lg,
-                      background: `linear-gradient(to right, ${colors.primary.DEFAULT}, ${colors.secondary.DEFAULT})`,
-                      color: "#FFFFFF",
-                      padding: `${spacing.sm} ${spacing.md}`,
-                      borderRadius: borderRadius.lg,
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: spacing.sm,
-                      boxShadow: shadows.sm,
-                      fontWeight: typography.fontWeight.medium,
-                      border: "none",
-                      cursor: "pointer"
-                    }}
-                  >
-                    View Products
-                    <FaArrowRight style={{ width: "1rem", height: "1rem" }} />
-                  </motion.button>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: transitionDurations.normal }}
-          className="text-center py-12"
-        >
-          <div 
-            style={{
-              padding: spacing.md,
-              backgroundColor: isDark ? colors.background.dark.tertiary : colors.background.light.tertiary,
-              marginBottom: spacing.md,
-              display: "inline-block",
-              borderRadius: "50%"
-            }}
-          >
-            <FaTag style={{ 
-              width: "3rem", 
-              height: "3rem", 
-              color: textColorTertiary 
-            }} />
-          </div>
-          <h3 
-            style={{
-              fontSize: typography.fontSize['2xl'],
-              fontWeight: typography.fontWeight.semibold,
-              marginBottom: spacing.sm,
-              color: textColor
-            }}
-          >
-            No Active Deals
-          </h3>
-          <p 
-            style={{ 
-              fontSize: typography.fontSize.base,
-              color: textColorSecondary
-            }}
-          >
-            Check back later for exciting offers and discounts!
+          <h1 className={`text-4xl font-bold mb-4 bg-gradient-to-r bg-clip-text text-transparent ${
+            isDarkMode 
+              ? "from-sky-400 via-purple-400 to-sky-400" 
+              : "from-sky-600 via-purple-600 to-sky-600"
+          }`}>
+            Special Deals & Offers
+          </h1>
+          <p className={`text-lg max-w-2xl mx-auto ${
+            isDarkMode ? 'text-gray-300' : 'text-gray-600'
+          }`}>
+            Discover amazing discounts and limited-time offers on our products.
+            Don't miss out on these exclusive deals!
           </p>
         </motion.div>
-      )}
+
+        {/* Error Message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-center py-4"
+          >
+            <p className="text-red-500">Error: {error}</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleRetry}
+              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer border-none hover:bg-blue-700"
+            >
+              Retry
+            </motion.button>
+          </motion.div>
+        )}
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <ClipLoader color="#3B82F6" size={50} />
+          </div>
+        ) : Array.isArray(activeDeals) && activeDeals.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <AnimatePresence>
+              {activeDeals.map((deal, index) => (
+                <motion.div
+                  key={deal.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{
+                    delay: index * 0.1,
+                    duration: 0.3,
+                  }}
+                  className={`group relative overflow-hidden rounded-xl shadow-lg backdrop-blur-lg ${
+                    isDarkMode
+                      ? "bg-white/10 border border-white/20"
+                      : "bg-white/70 border border-white/30"
+                  } hover:shadow-xl transition-all duration-300`}
+                >
+                  {/* Deal Badge */}
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute top-4 right-4 z-10"
+                  >
+                    <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-1 rounded-full text-white text-sm font-semibold flex items-center gap-1 shadow-sm">
+                      <FaPercent className="text-xs" />
+                      {deal.discountPercentage}% OFF
+                    </div>
+                  </motion.div>
+
+                  {/* Deal Image */}
+                  <div className="relative h-48 overflow-hidden">
+                    <LazyLoadImage
+                      src={getImageSrc(deal)}
+                      alt={deal.title}
+                      effect="blur"
+                      className="w-full h-full object-cover transform scale-100 group-hover:scale-110 transition-transform duration-500 ease-in-out"
+                      placeholderSrc="https://placehold.co/600x400?text=Loading..."
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
+                  </div>
+
+                  {/* Deal Content */}
+                  <div className="p-6">
+                    <h3
+                      className={`text-2xl font-bold mb-4 ${
+                        isDarkMode ? "text-white" : "text-gray-900"
+                      }`}
+                    >
+                      {deal.title}
+                    </h3>
+                    <p
+                      className={`mb-4 line-clamp-2 ${
+                        isDarkMode ? "text-gray-300" : "text-gray-600"
+                      }`}
+                    >
+                      {deal.description}
+                    </p>
+
+                    {/* Deal Info */}
+                    <div className="flex flex-col gap-2">
+                      <div
+                        className={`flex items-center gap-2 text-sm ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        <FaClock className="text-blue-500" />
+                        <span>
+                          Valid from {formatDate(deal.startDate)} to {formatDate(deal.endDate)}
+                        </span>
+                      </div>
+                      <div
+                        className={`flex items-center gap-2 text-sm ${
+                          isDarkMode ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        <FaGift className="text-green-500" />
+                        <span>
+                          {Array.isArray(deal.products) ? deal.products.length : 0} Products
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* View Products Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      onClick={() => handleViewProducts(deal.id)}
+                      className="mt-6 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm font-medium border-none cursor-pointer hover:from-blue-700 hover:to-purple-700"
+                    >
+                      View Products
+                      <FaArrowRight className="w-4 h-4" />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-center py-12"
+          >
+            <div className={`p-4 mb-4 inline-block rounded-full ${
+              isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+            }`}>
+              <FaTag className={`w-12 h-12 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`} />
+            </div>
+            <h3 className={`text-2xl font-semibold mb-2 ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
+              No Active Deals
+            </h3>
+            <p className={`text-base ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
+              Check back later for exciting offers and discounts!
+            </p>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };

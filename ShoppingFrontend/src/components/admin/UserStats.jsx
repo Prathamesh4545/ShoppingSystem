@@ -26,7 +26,27 @@ const statsConfig = [
     },
     {
         key: 'totalRevenue',
-        label: 'Total Revenue',
+        label: 'Active Revenue',
+        icon: FaRupeeSign,
+        gradient: 'from-green-500 to-emerald-600',
+        formatter: value => `₹ ${value.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`
+    },
+    {
+        key: 'cancelledRevenue',
+        label: 'Cancelled Revenue',
+        icon: FaRupeeSign,
+        gradient: 'from-red-500 to-pink-600',
+        formatter: value => `₹ ${value.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`
+    },
+    {
+        key: 'grossRevenue',
+        label: 'Gross Revenue',
         icon: FaRupeeSign,
         gradient: 'from-yellow-500 to-orange-600',
         formatter: value => `₹ ${value.toLocaleString(undefined, {
@@ -77,26 +97,52 @@ export default function UserStats({ stats }) {
                 <motion.div
                     key={key}
                     variants={item}
-                    className="relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 p-6 shadow-lg hover:shadow-xl transition-all duration-300"
-                    whileHover={{ scale: 1.02 }}
+                    className="group relative overflow-hidden rounded-2xl backdrop-blur-xl border p-6 transition-all duration-500 hover:-translate-y-2 bg-white/60 dark:bg-slate-800/40 border-slate-200/30 dark:border-slate-700/30 hover:bg-white/80 dark:hover:bg-slate-800/60 hover:border-slate-300/50 dark:hover:border-slate-600/50 shadow-xl hover:shadow-2xl"
+                    whileHover={{ scale: 1.03 }}
                 >
-                    {/* Gradient Background */}
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5`} />
+                    {/* Animated Background */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-5 group-hover:opacity-10 transition-opacity duration-500`} />
+                    
+                    {/* Floating Elements */}
+                    <div className="absolute top-2 right-2 w-12 h-12 bg-gradient-to-r from-white/10 to-white/5 rounded-full blur-xl group-hover:scale-150 transition-transform duration-700" />
+                    <div className="absolute bottom-2 left-2 w-8 h-8 bg-gradient-to-r from-white/10 to-white/5 rounded-full blur-lg group-hover:scale-125 transition-transform duration-700 delay-100" />
                     
                     {/* Content */}
-                    <div className="relative">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-lg bg-gradient-to-br ${gradient} text-white shadow-lg`}>
-                                <Icon className="w-6 h-6" />
+                    <div className="relative z-10">
+                        <div className="flex items-start justify-between mb-4">
+                            <div className={`relative p-4 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110`}>
+                                <Icon className="w-7 h-7" />
+                                {/* Icon glow effect */}
+                                <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradient} opacity-20 blur-lg group-hover:opacity-40 transition-opacity duration-300`} />
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
-                                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                                    {formatter(stats[key] || 0)}
-                                </p>
+                            <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${gradient} animate-pulse`} />
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                {label}
+                            </p>
+                            <p className="text-3xl font-bold text-slate-900 dark:text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-slate-900 group-hover:to-slate-600 dark:group-hover:from-white dark:group-hover:to-slate-300 transition-all duration-300">
+                                {formatter(stats[key] || 0)}
+                            </p>
+                        </div>
+                        
+                        {/* Progress indicator */}
+                        <div className="mt-4 flex items-center gap-2">
+                            <div className="flex-1 h-1 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                <motion.div 
+                                    className={`h-full bg-gradient-to-r ${gradient} rounded-full`}
+                                    initial={{ width: 0 }}
+                                    animate={{ width: '70%' }}
+                                    transition={{ duration: 1.5, delay: 0.5 }}
+                                />
                             </div>
+                            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">+12%</span>
                         </div>
                     </div>
+                    
+                    {/* Bottom accent */}
+                    <div className={`absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r ${gradient} opacity-30 group-hover:opacity-60 transition-opacity duration-300`} />
                 </motion.div>
             ))}
         </motion.div>

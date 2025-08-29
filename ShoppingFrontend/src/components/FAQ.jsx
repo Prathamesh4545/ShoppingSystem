@@ -1,27 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { FaChevronDown, FaChevronUp, FaQuestionCircle } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useTheme } from '../context/ThemeContext';
+import ThemeContext from '../context/ThemeContext';
 
 const FAQPage = () => {
   const [activeIndex, setActiveIndex] = useState(null);
-  const theme = useTheme();
-  const { isDark, colors, spacing, typography, borderRadius, shadows, transitions } = theme;
+  const { isDarkMode } = useContext(ThemeContext);
 
-  // Transition durations in seconds for Framer Motion
-  const transitionDurations = {
-    fast: 0.15,
-    normal: 0.25,
-    slow: 0.35
-  };
-  
-  // Theme-based colors
-  const bgColor = isDark ? colors.background.dark.primary : colors.background.light.primary;
-  const cardBgColor = isDark ? colors.background.dark.secondary : colors.background.light.secondary;
-  const faqItemBgColor = isDark ? colors.background.dark.tertiary : colors.background.light.tertiary;
-  const faqItemHoverBgColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)';
-  const textColor = isDark ? colors.text.dark.primary : colors.text.light.primary;
-  const textColorSecondary = isDark ? colors.text.dark.secondary : colors.text.light.secondary;
+
 
   const toggleQuestion = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -75,76 +61,50 @@ const FAQPage = () => {
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        paddingTop: spacing['4xl'],
-        paddingBottom: spacing['2xl'],
-        backgroundColor: bgColor
-      }}
+      className={`pt-16 min-h-screen ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+      }`}
     >
-      <div
-        style={{
-          maxWidth: "64rem",
-          margin: "0 auto",
-          padding: `0 ${spacing.md}`
-        }}
-      >
+      <div className="py-16">
+        <div className="max-w-4xl mx-auto px-4">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: transitionDurations.normal }}
-          style={{
-            boxShadow: shadows.lg,
-            borderRadius: borderRadius.lg,
-            padding: spacing.xl,
-            backgroundColor: cardBgColor
-          }}
+          transition={{ duration: 0.3 }}
+          className={`backdrop-blur-md border rounded-xl p-8 ${
+            isDarkMode 
+              ? "bg-white/10 border-white/20 shadow-2xl" 
+              : "bg-white/70 border-white/30 shadow-xl"
+          }`}
         >
           {/* Title Section */}
           <motion.div 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: transitionDurations.normal, delay: 0.2 }}
-            style={{
-              textAlign: "center",
-              marginBottom: spacing['2xl']
-            }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="text-center mb-8"
           >
-            <h1 
-              style={{
-                fontSize: typography.fontSize['4xl'],
-                fontWeight: typography.fontWeight.bold,
-                color: textColor
-              }}
-            >
+            <h1 className={`text-4xl font-bold mb-4 ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               Frequently Asked Questions
             </h1>
-            <p 
-              style={{
-                marginTop: spacing.md,
-                fontSize: typography.fontSize.lg,
-                color: textColorSecondary
-              }}
-            >
+            <p className={`text-lg ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Find answers to the most common questions about our services and policies.
             </p>
           </motion.div>
 
           {/* Category Filter */}
-          <div 
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "center",
-              gap: spacing.sm,
-              marginBottom: spacing.xl
-            }}
-          >
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
             <CategoryButton 
               label="All" 
               isActive={selectedCategory === 'all'} 
               onClick={() => setSelectedCategory('all')}
-              theme={theme}
+              isDarkMode={isDarkMode}
             />
             
             {categories.map(category => (
@@ -153,57 +113,51 @@ const FAQPage = () => {
                 label={category} 
                 isActive={selectedCategory === category} 
                 onClick={() => setSelectedCategory(category)}
-                theme={theme}
+                isDarkMode={isDarkMode}
               />
             ))}
           </div>
 
           {/* FAQ Accordion */}
-          <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+          <div className="flex flex-col gap-4">
             {filteredFAQs.length > 0 ? (
               filteredFAQs.map((faq, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: transitionDurations.normal, delay: index * 0.1 }}
-                  style={{
-                    borderRadius: borderRadius.lg,
-                    boxShadow: shadows.md,
-                    overflow: "hidden",
-                    backgroundColor: faqItemBgColor
-                  }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className={`backdrop-blur-md border overflow-hidden rounded-lg ${
+                    isDarkMode 
+                      ? "bg-white/10 border-white/20 shadow-2xl" 
+                      : "bg-white/70 border-white/30 shadow-xl"
+                  }`}
                 >
                   <motion.div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: spacing.lg,
-                      cursor: "pointer",
-                      backgroundColor: activeIndex === index ? faqItemHoverBgColor : 'transparent',
-                      transition: transitions.normal
-                    }}
-                    whileHover={{ backgroundColor: faqItemHoverBgColor }}
+                    className={`flex justify-between items-center p-6 cursor-pointer transition-colors duration-200 ${
+                      activeIndex === index 
+                        ? (isDarkMode ? 'bg-white/5' : 'bg-black/5') 
+                        : 'hover:bg-white/5 dark:hover:bg-white/5'
+                    }`}
                     onClick={() => toggleQuestion(index)}
                   >
-                    <h3 
-                      style={{
-                        fontSize: typography.fontSize.xl,
-                        fontWeight: typography.fontWeight.semibold,
-                        color: textColor
-                      }}
-                    >
+                    <h3 className={`text-xl font-semibold ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
                       {faq.question}
                     </h3>
                     <motion.div
                       animate={{ rotate: activeIndex === index ? 180 : 0 }}
-                      transition={{ duration: transitionDurations.fast }}
+                      transition={{ duration: 0.15 }}
                     >
                       {activeIndex === index ? (
-                        <FaChevronUp style={{ fontSize: "1.25rem", color: colors.primary.DEFAULT }} />
+                        <FaChevronUp className={`text-xl ${
+                          isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                        }`} />
                       ) : (
-                        <FaChevronDown style={{ fontSize: "1.25rem", color: textColorSecondary }} />
+                        <FaChevronDown className={`text-xl ${
+                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
+                        }`} />
                       )}
                     </motion.div>
                   </motion.div>
@@ -214,13 +168,10 @@ const FAQPage = () => {
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: transitionDurations.normal }}
-                        style={{
-                          padding: `0 ${spacing.lg} ${spacing.lg} ${spacing.lg}`,
-                          color: textColorSecondary,
-                          lineHeight: 1.6,
-                          overflow: "hidden"
-                        }}
+                        transition={{ duration: 0.3 }}
+                        className={`px-6 pb-6 overflow-hidden leading-relaxed ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                        }`}
                       >
                         <p>{faq.answer}</p>
                       </motion.div>
@@ -232,68 +183,43 @@ const FAQPage = () => {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                style={{
-                  textAlign: "center",
-                  padding: spacing.xl,
-                  backgroundColor: faqItemBgColor,
-                  borderRadius: borderRadius.lg,
-                  color: textColorSecondary
-                }}
+                className={`text-center p-8 rounded-lg ${
+                  isDarkMode 
+                    ? 'bg-gray-800/50 text-gray-300' 
+                    : 'bg-gray-100 text-gray-600'
+                }`}
               >
-                <FaQuestionCircle 
-                  style={{ 
-                    fontSize: "3rem", 
-                    color: colors.primary.light,
-                    display: "block",
-                    margin: "0 auto",
-                    marginBottom: spacing.md
-                  }} 
-                />
-                <p style={{ fontSize: typography.fontSize.lg }}>
+                <FaQuestionCircle className={`text-5xl mx-auto mb-4 ${
+                  isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                }`} />
+                <p className="text-lg">
                   No FAQs found in this category. Please try another category.
                 </p>
               </motion.div>
             )}
           </div>
         </motion.div>
+        </div>
       </div>
     </div>
   );
 };
 
 // Category button component
-const CategoryButton = ({ label, isActive, onClick, theme }) => {
-  const { isDark, colors, borderRadius, spacing, transitions } = theme;
-  
-  // Determine button colors based on theme and active state
-  const buttonColor = isActive 
-    ? colors.primary.DEFAULT 
-    : 'transparent';
-  
-  const textColor = isActive 
-    ? "#FFFFFF" 
-    : isDark ? colors.text.dark.secondary : colors.text.light.secondary;
-  
-  const borderColor = isActive 
-    ? colors.primary.DEFAULT 
-    : isDark ? colors.text.dark.tertiary : colors.text.light.tertiary;
-  
+const CategoryButton = ({ label, isActive, onClick, isDarkMode }) => {
   return (
     <motion.button
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       transition={{ duration: 0.15 }}
       onClick={onClick}
-      style={{
-        padding: `${spacing.xs} ${spacing.md}`,
-        borderRadius: borderRadius.full,
-        backgroundColor: buttonColor,
-        color: textColor,
-        border: `1px solid ${borderColor}`,
-        transition: transitions.normal,
-        cursor: "pointer",
-        fontWeight: isActive ? "600" : "normal"
-      }}
+      className={`px-4 py-2 rounded-full border transition-all duration-200 cursor-pointer ${
+        isActive
+          ? 'bg-blue-600 text-white border-blue-600 font-semibold'
+          : isDarkMode
+          ? 'bg-transparent text-gray-300 border-gray-600 hover:bg-gray-700'
+          : 'bg-transparent text-gray-600 border-gray-300 hover:bg-gray-100'
+      }`}
     >
       {label}
     </motion.button>

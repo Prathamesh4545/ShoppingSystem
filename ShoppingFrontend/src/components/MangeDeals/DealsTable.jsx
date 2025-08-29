@@ -1,9 +1,35 @@
-import React from "react";
-import { FaEdit, FaTrash, FaClock, FaPercent, FaCalendarAlt, FaImage } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash, FaClock, FaPercent, FaCalendarAlt, FaImage, FaToggleOn, FaToggleOff } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 
-const DealsTable = ({ deals, loading, onDelete, onEdit, hasRole }) => {
+const DealsTable = ({ deals, loading, onDelete, onEdit, onToggleStatus, hasRole }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  const isCurrentlyActive = (deal) => {
+    const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
+    const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
+    return deal.isActive && currentTime >= startDateTime && currentTime <= endDateTime;
+  };
+
+  const getStatusInfo = (deal) => {
+    const currentlyActive = isCurrentlyActive(deal);
+    if (!deal.isActive) {
+      return { status: 'Inactive', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' };
+    }
+    if (currentlyActive) {
+      return { status: 'Active', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' };
+    }
+    const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
+    if (currentTime < startDateTime) {
+      return { status: 'Scheduled', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' };
+    }
+    return { status: 'Expired', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' };
+  };
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -107,20 +133,25 @@ const DealsTable = ({ deals, loading, onDelete, onEdit, hasRole }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${
-                          deal.isActive === true
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
-                    >
-                      {deal.isActive === true ? "Active" : "Inactive"}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusInfo(deal).color}`}>
+                      {getStatusInfo(deal).status}
                     </span>
                   </td>
                   {hasRole("ADMIN") && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Toggle clicked for deal:', deal.id, 'current status:', deal.isActive);
+                            onToggleStatus && onToggleStatus(deal.id, !deal.isActive);
+                          }}
+                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
+                          title={deal.isActive ? "Deactivate" : "Activate"}
+                        >
+                          {deal.isActive ? <FaToggleOn className="w-5 h-5 text-green-500" /> : <FaToggleOff className="w-5 h-5 text-red-500" />}
+                        </button>
                         <button
                           onClick={() => onEdit(deal)}
                           className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"

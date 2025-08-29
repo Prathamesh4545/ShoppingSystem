@@ -1,5 +1,6 @@
 import React from 'react';
-import { useTheme } from '../../context/ThemeContext';
+import { useContext } from 'react';
+import ThemeContext from '../../context/ThemeContext';
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
 const Table = ({
@@ -11,7 +12,7 @@ const Table = ({
   emptyMessage = 'No data available',
   className = '',
 }) => {
-  const { isDark } = useTheme();
+  const { isDarkMode } = useContext(ThemeContext);
 
   const getSortIcon = (key) => {
     if (!sortConfig) return <FaSort className="w-4 h-4 ml-1" />;
@@ -42,10 +43,10 @@ const Table = ({
                 key={column.key}
                 scope="col"
                 className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                  isDark
+                  isDarkMode
                     ? 'text-gray-300 bg-gray-800'
                     : 'text-gray-500 bg-gray-50'
-                } ${column.sortable ? 'cursor-pointer' : ''}`}
+                } ${column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700' : ''}`}
                 onClick={() => column.sortable && handleSort(column.key)}
               >
                 <div className="flex items-center">
@@ -57,7 +58,7 @@ const Table = ({
           </tr>
         </thead>
         <tbody className={`divide-y divide-gray-200 dark:divide-gray-700 ${
-          isDark ? 'bg-gray-800' : 'bg-white'
+          isDarkMode ? 'bg-gray-800' : 'bg-white'
         }`}>
           {loading ? (
             <tr>
@@ -87,7 +88,7 @@ const Table = ({
                   <td
                     key={column.key}
                     className={`px-6 py-4 whitespace-nowrap text-sm ${
-                      isDark ? 'text-gray-300' : 'text-gray-900'
+                      isDarkMode ? 'text-gray-300' : 'text-gray-900'
                     }`}
                   >
                     {column.render ? column.render(row) : row[column.key]}

@@ -132,8 +132,11 @@ const DealForm = ({ deal, products, onSubmit, onCancel, isSubmitting }) => {
     if (!formData.endTime) {
       newErrors.endTime = "End time is required";
     }
-    if (!formData.image && !deal?.imageUrl) {
+    if (!formData.image && !formData.imagePreview) {
       newErrors.image = "Deal image is required";
+    }
+    if (!formData.products || formData.products.length === 0) {
+      newErrors.products = "At least one product must be selected";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -145,12 +148,12 @@ const DealForm = ({ deal, products, onSubmit, onCancel, isSubmitting }) => {
       const formattedData = {
         ...formData,
         discountPercentage: Number(formData.discountPercentage),
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: new Date(formData.endDate).toISOString(),
+        startDate: formData.startDate,
+        endDate: formData.endDate,
         startTime: formData.startTime,
         endTime: formData.endTime,
         isActive: Boolean(formData.isActive),
-        products: formData.products.map((product) => ({ id: product.id })),
+        products: formData.products,
       };
       onSubmit(formattedData);
     }
@@ -473,6 +476,18 @@ const DealForm = ({ deal, products, onSubmit, onCancel, isSubmitting }) => {
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Select one or more products for this deal
             </p>
+            <AnimatePresence>
+              {errors.products && (
+                <motion.p
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-1 text-sm text-red-500"
+                >
+                  {errors.products}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Active Status */}

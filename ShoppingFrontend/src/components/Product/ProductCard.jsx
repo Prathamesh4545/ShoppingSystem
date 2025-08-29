@@ -1,10 +1,11 @@
-import React, { useState, useContext, memo } from "react";
+import React, { useState, useContext, memo, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaShoppingCart, FaTag, FaClock, FaPercent, FaHeart, FaRegHeart } from "react-icons/fa";
 import { toast } from "react-toastify";
 import ThemeContext from "../../context/ThemeContext";
 import { useCart } from "../../context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { lazyLoadImage } from "../../utils/performance";
 
 const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice, dealInfo }) => {
   const [imageError, setImageError] = useState(false);
@@ -14,7 +15,7 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
   const { isDarkMode } = useContext(ThemeContext);
   const { addToCart: useCartAddToCart } = useCart();
 
-  const handleAddToCart = async (e) => {
+  const handleAddToCart = useCallback(async (e) => {
     e.preventDefault();
     if (!isAuthenticated) {
       toast.error("Please log in to add items to your cart.");
@@ -31,9 +32,9 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
     } catch (error) {
       toast.error(error.message || "Failed to add item to cart");
     }
-  };
+  }, [isAuthenticated, product.id, product.quantity, product.productName, useCartAddToCart, navigate]);
 
-  const handleWishlist = (e) => {
+  const handleWishlist = useCallback((e) => {
     e.preventDefault();
     if (!isAuthenticated) {
       toast.error("Please login to add items to wishlist");
@@ -41,14 +42,16 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
     }
     setIsWishlisted(!isWishlisted);
     toast.success(isWishlisted ? "Removed from wishlist" : "Added to wishlist");
-  };
+  }, [isAuthenticated, isWishlisted]);
 
-  const displayPrice = discountedPrice !== undefined ? discountedPrice : product.price;
-  const isDiscounted = discountedPrice !== undefined && discountedPrice < product.price;
-  const savings = isDiscounted ? product.price - displayPrice : 0;
+  const priceInfo = useMemo(() => {
+    const displayPrice = discountedPrice !== undefined ? discountedPrice : product.price;
+    const isDiscounted = discountedPrice !== undefined && discountedPrice < product.price;
+    const savings = isDiscounted ? product.price - displayPrice : 0;
+    return { displayPrice, isDiscounted, savings };
+  }, [discountedPrice, product.price]);
 
-  // Calculate time remaining for the deal
-  const getTimeRemaining = () => {
+  const timeRemaining = useMemo(() => {
     if (!dealInfo?.endDate) return null;
     const endDate = new Date(dealInfo.endDate);
     const now = new Date();
@@ -63,7 +66,7 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
     if (days > 0) return `${days}d ${hours}h`;
     if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
-  };
+  }, [dealInfo?.endDate]);
 
   return (
     <motion.div
@@ -71,8 +74,10 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ type: "spring", stiffness: 300 }}
-      className={`group relative bg-white/60 dark:bg-gray-800/60 backdrop-blur-lg rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl ${
-        isDarkMode ? 'hover:shadow-gray-700' : 'hover:shadow-gray-200'
+      className={`group relative backdrop-blur-xl rounded-2xl border transition-all duration-500 hover:scale-[1.02] ${
+        isDarkMode 
+          ? 'bg-white/5 border-white/10 hover:bg-white/10 shadow-2xl hover:shadow-blue-500/20' 
+          : 'bg-white/70 border-white/40 hover:bg-white/90 shadow-xl hover:shadow-purple-500/20'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -123,7 +128,7 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
 
       <Link to={`/product/${product.id}`} className="block" aria-label={`View ${product.productName}`}>
         {/* Product Image */}
-        <div className="relative w-full h-64 overflow-hidden rounded-t-xl">
+        <div className="relative w-full h-64 overflow-hidden rounded-t-2xl">
           <motion.img
             className="w-full h-full object-cover"
             src={
@@ -138,9 +143,23 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
             animate={{
               scale: isHovered ? 1.1 : 1,
             }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.5 }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className={`absolute inset-0 bg-gradient-to-t opacity-0 group-hover:opacity-100 transition-opacity duration-500 ${
+            isDarkMode ? 'from-black/70 to-transparent' : 'from-black/40 to-transparent'
+          }`} />
+          
+          {/* Floating elements on hover */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: isHovered ? 1 : 0, y: isHovered ? 0 : 20 }}
+            transition={{ duration: 0.3 }}
+            className="absolute bottom-4 left-4 right-4 flex justify-center"
+          >
+            <div className="backdrop-blur-lg bg-white/20 dark:bg-black/20 rounded-xl px-4 py-2">
+              <span className="text-white text-sm font-medium">Quick View</span>
+            </div>
+          </motion.div>
         </div>
 
         {/* Product Info */}
@@ -162,7 +181,7 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
               </div>
               <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400">
                 <FaClock className="text-xs" />
-                <span>Ends in {getTimeRemaining()}</span>
+                <span>Ends in {timeRemaining}</span>
               </div>
             </motion.div>
           )}
@@ -171,9 +190,9 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
           <div className="flex items-center justify-between mb-4">
             <div className="flex flex-col">
               <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                ₹{displayPrice.toFixed(2)}
+                ₹{priceInfo.displayPrice.toFixed(2)}
               </span>
-              {isDiscounted && (
+              {priceInfo.isDiscounted && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -183,7 +202,7 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
                     ₹{product.price.toFixed(2)}
                   </span>
                   <span className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Save ₹{savings.toFixed(2)}
+                    Save ₹{priceInfo.savings.toFixed(2)}
                   </span>
                 </motion.div>
               )}
@@ -192,13 +211,14 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
 
           {/* Add to Cart Button */}
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            whileHover={{ scale: 1.02, y: -2 }}
             whileTap={{ scale: 0.98 }}
             onClick={handleAddToCart}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all duration-200"
+            className="group/btn w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl hover:shadow-blue-500/25 relative overflow-hidden"
           >
-            <FaShoppingCart className="w-4 h-4" />
-            Add to Cart
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-500 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+            <FaShoppingCart className="w-4 h-4 relative z-10 group-hover/btn:scale-110 transition-transform" />
+            <span className="relative z-10 font-medium">Add to Cart</span>
           </motion.button>
         </div>
       </Link>

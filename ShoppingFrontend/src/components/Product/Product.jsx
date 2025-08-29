@@ -170,7 +170,6 @@ const Product = () => {
       </div>
     );
   }
-
   if (error) {
     return (
       <motion.div

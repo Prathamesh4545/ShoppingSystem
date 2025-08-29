@@ -27,7 +27,7 @@ import {
 } from "react-icons/fa";
 
 const Home = () => {
-  const { theme, isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { products, isLoading, error } = useContext(DataContext);
   const { addToCart } = useCart();
   const { isAuthenticated, token, logout, refreshToken, isTokenExpired } =
@@ -241,6 +241,17 @@ const Home = () => {
     navigate("/");
   }, [navigate]);
 
+  // Handle quick link clicks
+  const handlePopularClick = useCallback(() => {
+    setSortBy("popular");
+    navigate("/");
+  }, [setSortBy, navigate]);
+
+  const handleNewestClick = useCallback(() => {
+    setSortBy("newest");
+    navigate("/");
+  }, [setSortBy, navigate]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -309,9 +320,11 @@ const Home = () => {
 
   return (
     <div
-      className={`pt-16 bg-gradient-to-br ${
-        isDark ? "from-gray-900 to-gray-800" : "from-gray-50 to-gray-200"
-      } min-h-screen`}
+      className={`pt-16 min-h-screen ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+      }`}
     >
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -326,9 +339,12 @@ const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4"
+            className={`text-5xl md:text-7xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
           >
-            Welcome to the Shopping System
+            Shop the{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent animate-pulse">
+              Future
+            </span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -415,7 +431,7 @@ const Home = () => {
                     className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-300 shadow-md hover:shadow-lg ${
                       selectedCategory === category
                         ? "bg-gradient-to-r from-primary to-primary-dark text-white"
-                        : isDark
+                        : isDarkMode
                         ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
                         : "bg-white text-gray-700 hover:bg-gray-100"
                     }`}
@@ -528,10 +544,7 @@ const Home = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 cursor-pointer"
-              onClick={() => {
-                setSortBy("popular");
-                navigate("/");
-              }}
+              onClick={handlePopularClick}
             >
               <FaStar className="w-6 h-6 text-yellow-500 mx-auto mb-2" />
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">
@@ -544,10 +557,7 @@ const Home = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 cursor-pointer"
-              onClick={() => {
-                setSortBy("newest");
-                navigate("/");
-              }}
+              onClick={handleNewestClick}
             >
               <FaClock className="w-6 h-6 text-blue-500 mx-auto mb-2" />
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">

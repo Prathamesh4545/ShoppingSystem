@@ -254,23 +254,29 @@ const Users = () => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`p-8 ${
-        isDarkMode ? "bg-gray-900 text-white" : "bg-white text-gray-900"
+      className={`pt-16 min-h-screen p-8 ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white" 
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50 text-gray-900"
       }`}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row md:items-center md:justify-between mb-8"
+        >
           <div className="flex items-center gap-4 mb-4 md:mb-0">
             <div
-              className={`p-3 rounded-lg ${
-                isDarkMode ? "bg-gray-800" : "bg-blue-50"
+              className={`p-3 rounded-xl shadow-lg ${
+                isDarkMode ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
               }`}
             >
               <FaUsers className="w-8 h-8 text-blue-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">User Management</h1>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">User Management</h1>
               <p className="text-gray-500 dark:text-gray-400">
                 Manage your users and their roles
               </p>
@@ -279,12 +285,12 @@ const Users = () => {
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/admin/dashboard")}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+              className="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 dark:from-gray-700 dark:to-gray-800 text-white rounded-xl hover:from-gray-700 hover:to-gray-800 dark:hover:from-gray-600 dark:hover:to-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               Back to Dashboard
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -292,9 +298,9 @@ const Users = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className={`rounded-xl p-6 shadow-lg ${
-              isDarkMode ? "bg-gray-800" : "bg-white"
-            }`}
+            className={`rounded-xl p-6 shadow-lg backdrop-blur-sm border ${
+              isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
+            } hover:shadow-xl transition-all duration-200`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -317,9 +323,9 @@ const Users = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className={`rounded-xl p-6 shadow-lg ${
-              isDarkMode ? "bg-gray-800" : "bg-white"
-            }`}
+            className={`rounded-xl p-6 shadow-lg backdrop-blur-sm border ${
+              isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
+            } hover:shadow-xl transition-all duration-200`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -342,9 +348,9 @@ const Users = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className={`rounded-xl p-6 shadow-lg ${
-              isDarkMode ? "bg-gray-800" : "bg-white"
-            }`}
+            className={`rounded-xl p-6 shadow-lg backdrop-blur-sm border ${
+              isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
+            } hover:shadow-xl transition-all duration-200`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -367,9 +373,9 @@ const Users = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className={`rounded-xl p-6 shadow-lg ${
-              isDarkMode ? "bg-gray-800" : "bg-white"
-            }`}
+            className={`rounded-xl p-6 shadow-lg backdrop-blur-sm border ${
+              isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
+            } hover:shadow-xl transition-all duration-200`}
           >
             <div className="flex items-center justify-between">
               <div>
@@ -401,9 +407,12 @@ const Users = () => {
         )}
 
         {/* Filters and Search */}
-        <div
-          className={`rounded-xl p-6 shadow-lg mb-8 ${
-            isDarkMode ? "bg-gray-800" : "bg-white"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className={`rounded-xl p-6 shadow-lg mb-8 backdrop-blur-sm border ${
+            isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
           }`}
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -452,11 +461,18 @@ const Users = () => {
               <option value="email">Email (A-Z)</option>
             </select>
           </div>
-        </div>
+        </motion.div>
 
         {/* Users Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-gradient-to-r from-gray-50 via-gray-100 to-gray-200 dark:bg-gray-900 shadow-xl rounded-lg overflow-hidden border border-gray-200 dark:border-gray-800">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="overflow-x-auto"
+        >
+          <table className={`min-w-full shadow-xl rounded-xl overflow-hidden backdrop-blur-sm border ${
+            isDarkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
+          }`}>
             <thead>
               <tr className="bg-gray-100 dark:bg-gray-800 text-sm font-bold uppercase tracking-wide text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700">
                 <th className="py-3 px-4 text-left">Name</th>
@@ -555,7 +571,7 @@ const Users = () => {
               </AnimatePresence>
             </tbody>
           </table>
-        </div>
+        </motion.div>
 
         {/* Delete Confirmation Modal */}
         <AnimatePresence>

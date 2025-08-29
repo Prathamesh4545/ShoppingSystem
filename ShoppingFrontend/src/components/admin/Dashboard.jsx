@@ -21,12 +21,14 @@ import {
 } from "react-icons/fa";
 import ThemeContext from "../../context/ThemeContext";
 import { useContext } from "react";
+import { motion } from "framer-motion";
 import { useDashboardData } from "../../hooks/useDashboardData";
 import { useAuth } from "../../context/AuthContext";
 import { FiRefreshCw } from 'react-icons/fi';
 import UserStats from './UserStats';
 import { LineChart, PieChart } from './Charts';
 import { Spinner } from '../common/Spinner';
+import ModernLoader from '../common/ModernLoader';
 
 // Lazy Load Components for Performance
 const Sidebar = lazy(() => import("./Sidebar"));
@@ -84,13 +86,13 @@ const sidebarLinks = [
 
 // Loading Fallback Component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <FaSpinner className="w-8 h-8 text-blue-500 animate-spin" />
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+    <ModernLoader size="lg" text="Loading Dashboard..." />
   </div>
 );
 
 const Dashboard = () => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const { data, loading, error, refetch } = useDashboardData();
@@ -145,7 +147,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <Spinner size="lg" />
+        <ModernLoader size="lg" text="Loading analytics..." />
       </div>
     );
   }
@@ -165,60 +167,106 @@ const Dashboard = () => {
   }
 
   return (
-    <div className={`min-h-screen ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+    <div className={`pt-16 min-h-screen relative overflow-hidden ${
+      isDarkMode 
+        ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+        : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+    }`}>
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, ${isDarkMode ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)'} 0%, transparent 50%),
+                           radial-gradient(circle at 75% 75%, ${isDarkMode ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)'} 0%, transparent 50%)`
+        }} />
+      </div>
+      
       <Suspense fallback={<LoadingFallback />}>
         <Sidebar sidebarOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
         <div
-          className={`transition-all duration-300 ease-in-out ${
+          className={`relative transition-all duration-300 ease-in-out ${
             sidebarOpen ? "ml-64" : "ml-20"
           } p-6 md:p-8`}
         >
           {/* Welcome Section */}
           <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className={`text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2`}>
+            <div className="relative">
+              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent mb-2 leading-tight">
                 Welcome back, {user?.firstName || 'Admin'}
               </h1>
-              <p className={`text-sm md:text-base ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              <p className={isDarkMode ? "text-slate-300" : "text-slate-600"}>
                 Here's what's happening with your store today.
               </p>
+              <div className="absolute -top-2 -left-2 w-20 h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-xl" />
             </div>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
               onClick={refetch}
-              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 
-                bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700
-                shadow-lg hover:shadow-xl transform hover:-translate-y-0.5`}
+              className={`px-6 py-3 rounded-xl font-medium backdrop-blur-md border transition-all duration-300 shadow-lg hover:shadow-xl ${
+                isDarkMode
+                  ? "bg-gradient-to-r from-sky-800/80 to-sky-700/80 border-sky-600/50 text-white hover:from-sky-700/80 hover:to-sky-600/80"
+                  : "bg-gradient-to-r from-sky-500/80 to-sky-600/80 border-sky-400/50 text-white hover:from-sky-600/80 hover:to-sky-700/80"
+              }`}
             >
-              <FiRefreshCw className="w-4 h-4" />
-              Refresh Data
-            </button>
+              <FiRefreshCw className="w-4 h-4 mr-2" />
+              <span>Refresh Data</span>
+            </motion.button>
           </div>
 
           {/* Stats Cards */}
-          <div className="mb-8">
+          <div className="mb-10">
             <UserStats stats={data.stats} />
           </div>
 
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             <ChartCard
               title="Sales Overview"
               ChartComponent={Bar}
               data={chartData}
-              gradient="from-blue-500 to-purple-600"
+              gradient="from-blue-500 via-indigo-500 to-purple-600"
             />
             <ChartCard
               title="Revenue Trends"
               ChartComponent={Line}
               data={chartData}
-              gradient="from-green-500 to-teal-600"
+              gradient="from-emerald-500 via-teal-500 to-cyan-600"
             />
+          </div>
+          
+          {/* Additional Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             <ChartCard
               title="Product Categories"
               ChartComponent={Doughnut}
               data={categoryData}
-              gradient="from-orange-500 to-pink-600"
+              gradient="from-orange-500 via-pink-500 to-rose-600"
             />
+            <div className={`p-8 rounded-2xl backdrop-blur-sm border transition-all duration-300 hover:shadow-2xl ${
+              isDarkMode 
+                ? "bg-white/5 border-white/10 shadow-purple-500/10 hover:bg-white/10" 
+                : "bg-white/70 border-white/50 shadow-sky-500/10 hover:bg-white/80"
+            }`}>
+              <h3 className={`text-xl font-semibold mb-6 ${
+                isDarkMode ? "text-slate-200" : "text-slate-800"
+              }`}>
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <button className="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105">
+                  Add Product
+                </button>
+                <button className="p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 transform hover:scale-105">
+                  View Orders
+                </button>
+                <button className="p-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105">
+                  Manage Users
+                </button>
+                <button className="p-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-medium hover:from-orange-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105">
+                  Analytics
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </Suspense>

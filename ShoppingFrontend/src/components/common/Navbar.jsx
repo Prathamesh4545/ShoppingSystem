@@ -13,6 +13,7 @@ import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
 import { useUser } from "../../context/UserContext";
 import ThemeContext from "../../context/ThemeContext";
+import NotificationCenter from "./NotificationCenter";
 import {
   FaSearch,
   FaTimes,
@@ -35,7 +36,7 @@ const UserProfileDropdown = memo(
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const dropdownRef = useRef(null);
-    const { isDark } = useContext(ThemeContext);
+    const { isDarkMode } = useContext(ThemeContext);
     const { user: userData, loading } = useUser();
 
     useEffect(() => {
@@ -497,7 +498,7 @@ const Navbar = () => {
   const { setSearchQuery, setSearchField } = useContext(DataContext);
   const { cart } = useCart();
   const { user, isAuthenticated, logout } = useAuth();
-  const { theme, toggleTheme, isDark } = useContext(ThemeContext);
+  const { theme, toggleTheme, isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
@@ -549,13 +550,11 @@ const Navbar = () => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className={`bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl fixed w-full z-40 
-        border-b transition-all duration-300
-        ${
-          isScrolled
-            ? "shadow-xl border-gray-100/50 dark:border-gray-800/50 py-2"
-            : "shadow-md border-transparent py-3"
-        }`}
+      className={`fixed w-full z-40 transition-all duration-500 ${
+        isScrolled
+          ? "backdrop-blur-2xl bg-white/80 dark:bg-gray-900/80 shadow-2xl border-b border-white/20 dark:border-gray-700/30 py-2"
+          : "backdrop-blur-xl bg-white/60 dark:bg-gray-900/60 shadow-lg py-3"
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -686,7 +685,7 @@ const Navbar = () => {
                 dark:focus:ring-offset-gray-900"
               aria-label="Toggle Dark Mode"
             >
-              {isDark ? (
+              {isDarkMode ? (
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 0.5 }}
@@ -702,6 +701,9 @@ const Navbar = () => {
                 </motion.div>
               )}
             </motion.button>
+
+            {/* Notifications */}
+            <NotificationCenter />
 
             {/* User Profile */}
             <UserProfileDropdown

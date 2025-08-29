@@ -8,6 +8,7 @@ import * as Yup from "yup";
 import { useAuth } from "../../context/AuthContext"; 
 import { useCart } from "../../context/CartContext";  
 import ThemeContext from "../../context/ThemeContext";
+import { useNotificationHandler } from "../../hooks/useNotificationHandler";
 import "react-toastify/dist/ReactToastify.css";
 
 const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
@@ -16,6 +17,7 @@ const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
   const { fetchCart } = useCart();
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { notifyLoginSuccess, notifyLogoutSuccess, notifyNetworkError } = useNotificationHandler();
 
   const loginSchema = Yup.object().shape({
     userName: Yup.string().required("Username is required"),
@@ -27,7 +29,8 @@ const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
       const { user: userData } = await login(values);
       await fetchCart();
       
-      toast.success("Login successful!");
+      const userName = userData.firstName || userData.userName || 'User';
+      notifyLoginSuccess(userName);
       onClose();
 
       // Redirect based on user role
@@ -41,7 +44,7 @@ const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
                          error.message || 
                          "Login failed. Please try again.";
       setErrors({ submit: errorMessage });
-      toast.error(errorMessage);
+      notifyNetworkError();
     } finally {
       setSubmitting(false);
     }
@@ -69,7 +72,11 @@ const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
         {isAuthenticated ? (
           <div className="text-center space-y-6">
             <Button
-              onClick={logout}
+              onClick={() => {
+                logout();
+                notifyLogoutSuccess();
+                onClose();
+              }}
               className="w-full bg-red-600 hover:bg-red-700"
             >
               Logout

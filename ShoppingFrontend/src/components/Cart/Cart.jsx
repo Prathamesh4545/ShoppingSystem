@@ -2,18 +2,21 @@ import React, { useCallback, useMemo, useContext, useEffect } from "react";
 import { useCart } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import { useNotificationHandler } from "../../hooks/useNotificationHandler";
 import CartItem from "./CartItem";
 import OrderSummary from "./OrderSummary";
 import { Link, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
 import ThemeContext from "../../context/ThemeContext";
 import { FaShoppingCart, FaArrowLeft, FaTag, FaGift, FaPercent } from "react-icons/fa";
+import { motion } from "framer-motion";
 
 const Cart = () => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { cart, removeFromCart, updateQuantity, fetchCart, loading, error } = useCart();
   const { isAuthenticated, token } = useContext(AuthContext);
   const navigate = useNavigate();
+  const { notifyItemRemovedFromCart, notifyCartCleared, notifyOrderPlaced, notifyNetworkError } = useNotificationHandler();
 
   // Check for expired deals and update cart
   const checkDealExpiration = useCallback(async () => {
@@ -111,7 +114,7 @@ const Cart = () => {
         await fetchCart();
       } catch (error) {
         console.error("Increment error:", error);
-        toast.error(error.message || "Failed to increment quantity.");
+        notifyNetworkError();
       }
     },
     [updateQuantity, fetchCart]
@@ -130,11 +133,15 @@ const Cart = () => {
           await updateQuantity(itemId, -1);
         } else {
           await removeFromCart(itemId);
+          const item = cart.find(item => item.id === itemId);
+          if (item?.product?.productName) {
+            notifyItemRemovedFromCart(item.product.productName);
+          }
         }
         await fetchCart();
       } catch (error) {
         console.error("Decrement error:", error);
-        toast.error(error.message || "Failed to decrement quantity.");
+        notifyNetworkError();
       }
     },
     [cart, removeFromCart, updateQuantity, fetchCart]
@@ -162,12 +169,13 @@ const Cart = () => {
     try {
       // Here you would typically make an API call to place the order
       // For now, we'll just show a success message
-      toast.success("Order placed successfully!");
+      const orderId = `ORD${Date.now()}`;
+      notifyOrderPlaced(orderId);
       // Clear the cart after successful order
       await fetchCart();
       navigate("/orders");
     } catch (error) {
-      toast.error("Failed to place order. Please try again.");
+      notifyNetworkError();
     }
   }, [isAuthenticated, navigate, fetchCart]);
 
@@ -228,26 +236,63 @@ const Cart = () => {
 
   // Main cart UI
   return (
-    <div className={`min-h-screen pt-20 ${isDark ? 'bg-gray-900' : 'bg-gray-50'}`}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={`pt-16 min-h-screen relative overflow-hidden ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+      }`}
+    >
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full opacity-20 blur-3xl animate-pulse ${
+          isDarkMode ? "bg-purple-500" : "bg-sky-400"
+        }`} />
+        <div className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full opacity-20 blur-3xl animate-pulse delay-1000 ${
+          isDarkMode ? "bg-sky-500" : "bg-purple-400"
+        }`} />
+      </div>
+      
+      <div className="relative z-10 pt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8"
+        >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+            <h1 className={`text-4xl font-bold bg-gradient-to-r bg-clip-text text-transparent flex items-center gap-3 ${
+              isDarkMode 
+                ? "from-sky-400 via-purple-400 to-sky-400" 
+                : "from-sky-600 via-purple-600 to-sky-600"
+            }`}>
               Shopping Cart
-              <span className="text-lg px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 rounded-full">
+              <span className={`text-lg px-3 py-1 rounded-full backdrop-blur-md border ${
+                isDarkMode 
+                  ? "bg-sky-500/20 border-sky-500/30 text-sky-400" 
+                  : "bg-sky-500/10 border-sky-500/20 text-sky-600"
+              }`}>
                 {cart.length} {cart.length === 1 ? 'item' : 'items'}
               </span>
             </h1>
           </div>
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-          >
-            <FaArrowLeft className="text-sm" />
-            Continue Shopping
-          </Link>
-        </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Link
+              to="/"
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl backdrop-blur-md border transition-all duration-300 ${
+                isDarkMode
+                  ? "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white"
+                  : "bg-white/50 border-white/30 text-slate-600 hover:bg-white/70 hover:text-slate-900"
+              }`}
+            >
+              <FaArrowLeft className="text-sm" />
+              Continue Shopping
+            </Link>
+          </motion.div>
+        </motion.div>
         
         {/* Active Deals Banner */}
         {dealsSummary.count > 0 && (
@@ -329,8 +374,9 @@ const Cart = () => {
             />
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

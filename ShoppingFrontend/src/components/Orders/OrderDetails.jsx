@@ -28,7 +28,7 @@ import {
 import { motion } from "framer-motion";
 
 const OrderDetails = () => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { user, token } = useAuth();
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -52,17 +52,17 @@ const OrderDetails = () => {
           const errorData = await response.text();
           if (response.status === 403) {
             toast.error(errorData || "You don't have permission to view this order");
-            navigate("/");
+            navigate("/my-orders");
             return;
           }
           if (response.status === 401) {
             toast.error(errorData || "Please login to view order details");
-            navigate("/");
+            navigate("/login");
             return;
           }
           if (response.status === 404) {
-            toast.error(errorData || "Order not found");
-            navigate("/");
+            toast.error("Order not found or has been deleted");
+            navigate("/my-orders");
             return;
           }
           throw new Error(errorData || "Failed to fetch order details");
@@ -180,6 +180,32 @@ const OrderDetails = () => {
     }
   };
 
+  const handleCancelOrder = async () => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/orders/${orderId}/cancel`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        setOrder(prev => ({ ...prev, status: "CANCELLED" }));
+        toast.success("Order cancelled successfully!");
+      } else {
+        toast.error("Failed to cancel order. Please try again.");
+      }
+    } catch (error) {
+      console.error("Cancel error:", error);
+      toast.error("Failed to cancel order. Please try again.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen pt-20 flex items-center justify-center">
@@ -196,7 +222,7 @@ const OrderDetails = () => {
             Order not found
           </h2>
           <button
-            onClick={() => navigate("/orders")}
+            onClick={() => navigate("/my-orders")}
             className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
           >
             Back to Orders
@@ -218,8 +244,12 @@ const OrderDetails = () => {
   const finalTotal = subtotal + shipping + tax;
 
   return (
-    <div className={`min-h-screen pt-20 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+    <div className={`pt-16 min-h-screen ${
+      isDarkMode 
+        ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+        : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24" style={{marginTop: '50px'}}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -266,7 +296,9 @@ const OrderDetails = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className={`rounded-xl p-6 shadow-lg mb-8 ${isDark ? "bg-gray-800" : "bg-white"}`}
+          className={`rounded-xl p-6 shadow-lg backdrop-blur-lg mb-8 ${
+            isDarkMode ? "bg-white/10 border border-white/20" : "bg-white/70 border border-white/30"
+          }`}
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
@@ -281,9 +313,17 @@ const OrderDetails = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)} bg-opacity-10 ${isDark ? 'bg-white' : 'bg-gray-100'}`}>
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)} bg-opacity-10 ${isDarkMode ? 'bg-white' : 'bg-gray-100'}`}>
                 {order.status}
               </span>
+              {order.status === "PENDING" && (
+                <button
+                  onClick={handleCancelOrder}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+                >
+                  Cancel Order
+                </button>
+              )}
             </div>
           </div>
 
@@ -323,7 +363,9 @@ const OrderDetails = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className={`rounded-xl p-6 shadow-lg mb-8 ${isDark ? "bg-gray-800" : "bg-white"}`}
+          className={`rounded-xl p-6 shadow-lg backdrop-blur-lg mb-8 ${
+            isDarkMode ? "bg-white/10 border border-white/20" : "bg-white/70 border border-white/30"
+          }`}
         >
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Order Items
@@ -380,7 +422,9 @@ const OrderDetails = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className={`rounded-xl p-6 shadow-lg mb-8 ${isDark ? "bg-gray-800" : "bg-white"}`}
+          className={`rounded-xl p-6 shadow-lg backdrop-blur-lg mb-8 ${
+            isDarkMode ? "bg-white/10 border border-white/20" : "bg-white/70 border border-white/30"
+          }`}
         >
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Price Summary
@@ -454,7 +498,9 @@ const OrderDetails = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className={`rounded-xl p-6 shadow-lg ${isDark ? "bg-gray-800" : "bg-white"}`}
+          className={`rounded-xl p-6 shadow-lg backdrop-blur-lg ${
+            isDarkMode ? "bg-white/10 border border-white/20" : "bg-white/70 border border-white/30"
+          }`}
         >
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
             <FaMapMarkerAlt className="text-blue-500" />
