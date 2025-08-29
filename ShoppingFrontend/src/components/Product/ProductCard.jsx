@@ -17,9 +17,9 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
 
   const handleAddToCart = useCallback(async (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!isAuthenticated) {
       toast.error("Please log in to add items to your cart.");
-      navigate("/login");
       return;
     }
     if (product.quantity <= 0) {
@@ -32,10 +32,11 @@ const ProductCard = memo(({ product, addToCart, isAuthenticated, discountedPrice
     } catch (error) {
       toast.error(error.message || "Failed to add item to cart");
     }
-  }, [isAuthenticated, product.id, product.quantity, product.productName, useCartAddToCart, navigate]);
+  }, [isAuthenticated, product.id, product.quantity, product.productName, useCartAddToCart]);
 
   const handleWishlist = useCallback((e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!isAuthenticated) {
       toast.error("Please login to add items to wishlist");
       return;

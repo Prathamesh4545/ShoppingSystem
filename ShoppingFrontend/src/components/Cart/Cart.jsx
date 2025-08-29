@@ -113,7 +113,7 @@ const Cart = () => {
         await updateQuantity(itemId, 1);
         await fetchCart();
       } catch (error) {
-        console.error("Increment error:", error);
+        console.error("Increment error - sanitized");
         notifyNetworkError();
       }
     },
@@ -140,7 +140,7 @@ const Cart = () => {
         }
         await fetchCart();
       } catch (error) {
-        console.error("Decrement error:", error);
+        console.error("Decrement error - sanitized");
         notifyNetworkError();
       }
     },

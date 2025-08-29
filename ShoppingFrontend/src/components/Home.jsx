@@ -252,6 +252,10 @@ const Home = () => {
     navigate("/");
   }, [setSortBy, navigate]);
 
+  const handleDealsClick = useCallback(() => {
+    navigate("/deals");
+  }, [navigate]);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -531,7 +535,7 @@ const Home = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 cursor-pointer"
-              onClick={() => navigate("/deals")}
+              onClick={handleDealsClick}
             >
               <FaFire className="w-6 h-6 text-orange-500 mx-auto mb-2" />
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">
@@ -570,7 +574,7 @@ const Home = () => {
             <motion.div
               whileHover={{ scale: 1.05 }}
               className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 cursor-pointer"
-              onClick={() => navigate("/deals")}
+              onClick={handleDealsClick}
             >
               <FaTag className="w-6 h-6 text-green-500 mx-auto mb-2" />
               <h4 className="text-sm font-medium text-gray-900 dark:text-white">

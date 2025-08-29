@@ -51,7 +51,7 @@ const UserProfileDropdown = memo(
     }, []);
 
     const handleImageError = (e) => {
-      console.error("Image load error:", e);
+      console.error("Image load error - sanitized");
       e.target.src = "https://placehold.co/150";
     };
 

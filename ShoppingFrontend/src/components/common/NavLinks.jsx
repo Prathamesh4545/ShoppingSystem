@@ -14,15 +14,14 @@ const navItems = [
   { name: "Contact", icon: FaEnvelope, path: "/contact" }
 ];
 
-const NavLinks = memo(({ isMobile, onLinkClick, navigate }) => {
-  const { hasRole } = useAuth();
+const NavLinks = ({ isMobile, onLinkClick, navigate }) => {
+  const { hasRole, user } = useAuth();
   const location = useLocation();
   const { isDark } = useContext(ThemeContext);
 
-  const handleLinkClick = useCallback((path) => {
+  const handleLinkClick = useCallback((e) => {
     onLinkClick?.();
-    navigate(path);
-  }, [navigate, onLinkClick]);
+  }, [onLinkClick]);
 
   const isActive = useCallback((path) => {
     if (path === "/") return location.pathname === "/";
@@ -71,10 +70,7 @@ const NavLinks = memo(({ isMobile, onLinkClick, navigate }) => {
           >
             <Link
               to={path}
-              onClick={(e) => {
-                e.preventDefault();
-                handleLinkClick(path);
-              }}
+              onClick={handleLinkClick}
               className={`
                 ${isMobile ? 'flex items-center space-x-3 w-full p-3' : 'inline-flex items-center space-x-2 px-4 py-2'}
                 rounded-xl text-sm font-medium transition-all duration-300
@@ -141,10 +137,7 @@ const NavLinks = memo(({ isMobile, onLinkClick, navigate }) => {
         >
           <Link
             to="/admin/dashboard"
-            onClick={(e) => {
-              e.preventDefault();
-              handleLinkClick("/admin/dashboard");
-            }}
+            onClick={handleLinkClick}
             className={`
               ${isMobile ? 'flex items-center space-x-3 w-full p-3' : 'inline-flex items-center space-x-2 px-4 py-2'}
               rounded-xl text-sm font-medium transition-all duration-300
@@ -203,6 +196,6 @@ const NavLinks = memo(({ isMobile, onLinkClick, navigate }) => {
       )}
     </motion.div>
   );
-});
+};
 
 export default NavLinks;

@@ -180,7 +180,10 @@ const UserProfile = () => {
       await axios.delete(`${API_URL}/address/${addressId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
         },
+        withCredentials: true
       });
       setAddresses((prev) => prev.filter((addr) => addr.id !== addressId));
       toast.success("Address deleted successfully");

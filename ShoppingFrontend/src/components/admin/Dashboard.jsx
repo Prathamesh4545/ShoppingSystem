@@ -19,6 +19,7 @@ import {
   FaSpinner,
   FaSync,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 import ThemeContext from "../../context/ThemeContext";
 import { useContext } from "react";
 import { motion } from "framer-motion";
@@ -253,18 +254,18 @@ const Dashboard = () => {
                 Quick Actions
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                <button className="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105">
+                <Link to="/products/add" className="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 block text-center">
                   Add Product
-                </button>
-                <button className="p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 transform hover:scale-105">
+                </Link>
+                <Link to="/orders" className="p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 transform hover:scale-105 block text-center">
                   View Orders
-                </button>
-                <button className="p-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105">
+                </Link>
+                <Link to="/users" className="p-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 block text-center">
                   Manage Users
-                </button>
-                <button className="p-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-medium hover:from-orange-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105">
+                </Link>
+                <Link to="/analytics" className="p-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-medium hover:from-orange-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 block text-center">
                   Analytics
-                </button>
+                </Link>
               </div>
             </div>
           </div>

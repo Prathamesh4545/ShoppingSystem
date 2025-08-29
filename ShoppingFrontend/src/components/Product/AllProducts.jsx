@@ -34,7 +34,7 @@ const AllProducts = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log('Fetched products count:', response.data?.length || 0); // Sanitized log
+      console.log('Products fetched successfully');
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -160,7 +160,7 @@ const AllProducts = () => {
         }));
       }
 
-      console.log('Updating product with ID:', encodeURIComponent(selectedProduct.id)); // Sanitized log
+      console.log('Updating product');
 
       const response = await axios.put(
         `http://localhost:8080/api/product/${selectedProduct.id}`,

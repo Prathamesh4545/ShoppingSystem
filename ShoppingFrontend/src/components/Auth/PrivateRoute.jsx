@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useGuest } from '../../context/GuestContext';
@@ -8,10 +8,12 @@ const PrivateRoute = ({ children, roles = [] }) => {
   const { isAuthenticated, user } = useAuth();
   const { guestUser } = useGuest();
   const location = useLocation();
+  const notificationShown = useRef(false);
 
   useEffect(() => {
-    if (!isAuthenticated && !guestUser) {
-      toast.error('Please log in to access this page');
+    if (!isAuthenticated && !guestUser && !notificationShown.current) {
+      toast.info('Please login first to access this page');
+      notificationShown.current = true;
     }
   }, [isAuthenticated, guestUser]);
 
@@ -27,9 +29,8 @@ const PrivateRoute = ({ children, roles = [] }) => {
     return children;
   }
 
-  // Redirect to login if not authenticated
-  // return <Navigate to="/" state={{ from: location }} replace />;
-  return <Navigate to="*" state={{ from: location }} replace />;
+  // Redirect to home page if not authenticated
+  return <Navigate to="/" state={{ from: location }} replace />;
 };
 
 export default PrivateRoute; 

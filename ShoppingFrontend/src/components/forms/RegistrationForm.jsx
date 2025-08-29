@@ -62,7 +62,7 @@ const RegistrationForm = ({
 
       await fetchCart();
       toast.success("Registration successful! You are now logged in.");
-      setTimeout(onClose, 1000);
+      onClose();
     } catch (error) {
       console.error("Registration error:", error);
       const errorMessage = error.response?.data?.message || 

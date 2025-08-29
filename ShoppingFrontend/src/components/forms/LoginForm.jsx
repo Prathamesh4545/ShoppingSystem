@@ -33,10 +33,10 @@ const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
       notifyLoginSuccess(userName);
       onClose();
 
-      // Redirect based on user role
+      // Immediate redirect based on user role
       navigate(userData.roles.includes("ADMIN") 
         ? "/admin/dashboard" 
-        : "/"
+        : "/", { replace: true }
       );
     } catch (error) {
       console.error("Login error:", error);

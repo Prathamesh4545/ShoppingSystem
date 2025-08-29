@@ -7,15 +7,16 @@ const AdminRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'ADMIN') {
-      toast.error('You do not have permission to access this page');
-    }
-  }, [isAuthenticated, user]);
-
   // Check if user is authenticated and has admin role
-  if (isAuthenticated && user?.role === 'ADMIN') {
+  const hasAdminRole = user?.role === 'ADMIN' || user?.roles?.includes('ADMIN');
+  
+  if (isAuthenticated && hasAdminRole) {
     return children;
+  }
+
+  // Show error only when redirecting
+  if (isAuthenticated && !hasAdminRole) {
+    toast.error('You do not have permission to access this page');
   }
 
   // Redirect to unauthorized page
