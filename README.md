@@ -37,8 +37,8 @@ To run this project, the following software must be installed on your system:
    Location : **Spring Projects\Shopping-System\ShoppingBackend\src\main\resources**
    ```bash
    spring.datasource.url=jdbc:postgresql://localhost:5432/ShoppingSystemDB
-   spring.datasource.username= **add your username which associated with your postgresql**
-   spring.datasource.password= **add your password as well**
+   spring.datasource.username= add your username which associated with your postgresql
+   spring.datasource.password= add your password as well
    ```
 4. Navigate to the **frontend** directory and install the required dependencies:
    ```bash
