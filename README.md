@@ -33,25 +33,31 @@ To run this project, the following software must be installed on your system:
 ### Setup Instructions
 
 1. Clone the repository.
-2. Navigate to the **frontend** directory and install the required dependencies:
+2. Change postgresql database as well as username and password - **application.properties**
+   ```bash
+   spring.datasource.url=jdbc:postgresql://localhost:5432/ShoppingSystemDB
+   spring.datasource.username=postgres
+   spring.datasource.password=root8080
+   ```
+3. Navigate to the **frontend** directory and install the required dependencies:
    ```bash
    cd ShoppingFrontend
    npm install
    ```
-3. Start the backend server by running the main application file:
+4. Start the backend server by running the main application file:
    ```bash
    ShoppingBackendApplication.java
    ```
-4. Launch the frontend application:
+5. Launch the frontend application:
    ```bash
    npm run dev
    ```
-5. Open your web browser and visit the application at:
+6. Open your web browser and visit the application at:
    ```bash
    http://localhost:5173/
    ```
-6. Then make registration.
-7. First, create the initial admin user manually using pgAdmin used - **ADMIN**. This is necessary because the system requires at least one admin account to access the admin panel.
+7. Then make registration.
+8. First, create the initial admin user manually using pgAdmin used - **ADMIN**. This is necessary because the system requires at least one admin account to access the admin panel.
    Once the admin user is created, you can log in to the admin dashboard. From there, you’ll be able to:
    ```bash
    i) Add new employees through the dashboard.
