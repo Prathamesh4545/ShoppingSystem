@@ -33,7 +33,7 @@ To run this project, the following software must be installed on your system:
 ### Setup Instructions
 
 1. Clone the repository.
-2. Change postgresql database as well as username and password - **application.properties**
+2. Make Changes on postgresql database name as well as username and password - **application.properties**
    ```bash
    spring.datasource.url=jdbc:postgresql://localhost:5432/ShoppingSystemDB
    spring.datasource.username=postgres
