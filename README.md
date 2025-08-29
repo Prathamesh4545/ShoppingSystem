@@ -50,7 +50,15 @@ To run this project, the following software must be installed on your system:
    ```bash
    http://localhost:5173/
    ```
+6. Then make registration.
+7. First, create the initial admin user manually using pgAdmin used - **ADMIN**. This is necessary because the system requires at least one admin account to access the admin panel.
+   Once the admin user is created, you can log in to the admin dashboard. From there, you’ll be able to:
+   ```bash
+   i) Add new employees through the dashboard.
+   ii) Assign admin privileges to employees as needed.
+   ```
 
+Perform all operations that are available only within the admin panel.
    Note: Preloaded data is available in the `DataInitializer.java` file. Product images are in byte format so that it will not include in preload file, and also you can add or update images via the admin dashboard.
 
 ---
