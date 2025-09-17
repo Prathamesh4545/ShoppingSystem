@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  database:
+    image: postgres:15-alpine
+    container_name: shopping-db
+    environment:
+      POSTGRES_DB: ShoppingSystemDB
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root8080
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shopping-network
+
+  backend:
+    build: ./ShoppingBackend
+    container_name: shopping-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/ShoppingSystemDB
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root8080
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    networks:
+      - shopping-network
+
+  frontend:
+    build: ./ShoppingFrontend
+    container_name: shopping-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - shopping-network
+
+volumes:
+  postgres_data:
+
+networks:
+  shopping-network:
+    driver: bridge
