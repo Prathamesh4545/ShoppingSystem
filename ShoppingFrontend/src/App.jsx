@@ -30,8 +30,8 @@ import OrderDetails from "./components/Orders/OrderDetails";
 import AddressForm from "./components/Addresses/AddressForm";
 
 // Admin Components
-import Dashboard from "./components/admin/Dashboard";
-import Analytics from "./components/admin/Analytics";
+import Dashboard from "./components/Admin/Dashboard.jsx";
+import Analytics from "./components/Admin/Analytics.jsx";
 import AllProducts from "./components/Product/AllProducts";
 import AddProduct from "./components/Product/AddProduct";
 import UpdateProduct from "./components/Product/UpdateProduct";
