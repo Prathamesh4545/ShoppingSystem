@@ -20,7 +20,7 @@ public interface ProductRepo extends JpaRepository<Product, Integer> {
             "LOWER(p.productName) LIKE LOWER(CONCAT('%', :searchQuery, '%')) OR " +
             "LOWER(p.brand) LIKE LOWER(CONCAT('%', :searchQuery, '%')) OR " +
             "LOWER(p.category) LIKE LOWER(CONCAT('%', :searchQuery, '%'))")
-    List<Product> searchProduct(String searchField, String searchQuery);
+    List<Product> searchProduct(@Param("searchQuery") String searchQuery);
 
     List<Product> findByProductNameContainingOrDescContaining(String searchQuery, String searchQuery2);
 
