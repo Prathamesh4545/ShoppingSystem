@@ -1,6 +1,7 @@
 package com.prathamesh.ShoppingBackend.Config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -29,6 +30,8 @@ import java.util.List;
 @EnableWebSecurity
 public class SpringConfig {
 
+    @Value("${FRONTEND_URL}")
+    private String frontendUrl;
     @Autowired
     private JWTFilter jwtFilter;
 
@@ -91,7 +94,7 @@ public class SpringConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173")); // Allow frontend origin
+        configuration.setAllowedOrigins(List.of(frontendUrl)); // Allow frontend origin
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE")); // Allow common HTTP methods
         configuration.setAllowedHeaders(List.of("*")); // Allow all headers
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
