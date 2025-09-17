@@ -104,9 +104,9 @@ public class ProductService {
     }
 
     public List<Product> searchProduct(String searchField, String searchQuery) {
-        if (searchField == null || searchQuery == null || searchField.isEmpty() || searchQuery.isEmpty()) {
-            throw new IllegalArgumentException("Search field and query must not be empty");
+        if (searchQuery == null || searchQuery.isEmpty()) {
+            throw new IllegalArgumentException("Search query must not be empty");
         }
-        return productRepo.searchProduct(searchField, searchQuery);
+        return productRepo.searchProduct(searchQuery);
     }
 }
