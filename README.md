@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ShoppingSystem
 
 Welcome to **ShoppingSystem**, an advanced full-stack application designed to enhance the shopping experience. While the project is still in development, it demonstrates significant potential. This document serves as a comprehensive guide to the system’s features, functionalities, and instructions for getting started.
@@ -142,3 +143,6 @@ To deploy the project, follow these steps:
    ```
 
 We encourage you to explore, test, and contribute to ShoppingSystem to help enhance its functionality and user experience. Thank you for your participation, and happy coding! 🚀
+=======
+# ShoppingSystem
+>>>>>>> 5a268b6a32714174a8429ace24fbfde7ef0209bd
