@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ShoppingSystem
 
 Welcome to **ShoppingSystem**, an advanced full-stack application designed to enhance the shopping experience. While the project is still in development, it demonstrates significant potential. This document serves as a comprehensive guide to the system’s features, functionalities, and instructions for getting started.
