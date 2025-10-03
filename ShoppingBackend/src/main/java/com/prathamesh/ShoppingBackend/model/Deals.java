@@ -93,9 +93,6 @@ public class Deals {
     public void addProduct(Product product) {
         if (!products.contains(product)) {
             products.add(product);
-            if (product.getDeals() != null && !product.getDeals().contains(this)) {
-                product.getDeals().add(this);
-            }
         }
     }
 
