@@ -121,24 +121,16 @@ To deploy the project, follow these steps:
    ```bash
    npm run dev
    ```
-3. Start the backend server by running the main application file:
-   ```bash
-   ShoppingBackendApplication.java
-   ```
-4. Launch the frontend application:
-   ```bash
-   npm run dev
-   ```
-5. Open your web browser and visit the application at:
-   ```bash
-   http://localhost:5173/
-   ```
-6. Then make registration.
-7. First, create the initial admin user manually using pgAdmin used - **ADMIN**. This is necessary because the system requires at least one admin account to access the admin panel.
-   Once the admin user is created, you can log in to the admin dashboard. From there, you’ll be able to:
+3. We have already done 1 admin and 1 user to manage or test application 
    ```bash
    i) Add new employees through the dashboard.
    ii) Assign admin privileges to employees as needed.
    ```
+4. Admin
+   ```bash
+   i) Username - admin.
+   ii) Password - adminPassword.
+   ```
+5. Then make registration and test application.
 
 We encourage you to explore, test, and contribute to ShoppingSystem to help enhance its functionality and user experience. Thank you for your participation, and happy coding! 🚀
