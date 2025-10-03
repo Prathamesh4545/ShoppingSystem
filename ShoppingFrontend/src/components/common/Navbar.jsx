@@ -53,10 +53,11 @@ const UserProfileDropdown = memo(
     };
 
     const getImageSource = (userData) => {
-      if (!userData?.imageData || !userData?.imageType) {
-        return "https://placehold.co/150";
+      if (!userData) return "https://placehold.co/150";
+      if (userData.imageData && userData.imageType) {
+        return `data:${userData.imageType};base64,${userData.imageData}`;
       }
-      return `data:${userData.imageType};base64,${userData.imageData}`;
+      return "https://placehold.co/150";
     };
 
     return (
@@ -67,7 +68,7 @@ const UserProfileDropdown = memo(
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-white transition
+          className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white transition-all duration-300
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
             dark:focus:ring-offset-gray-900 rounded-full relative"
           aria-label="User Profile"
@@ -79,7 +80,7 @@ const UserProfileDropdown = memo(
               ) : (
                 <>
                   <img
-                    src={getImageSource(userData)}
+                    src={getImageSource(userData || user)}
                     alt="User"
                     className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/20 
                       hover:ring-blue-500/40 transition-all duration-300"
@@ -137,7 +138,7 @@ const UserProfileDropdown = memo(
                         <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse" />
                       ) : (
                         <motion.img
-                          src={getImageSource(userData)}
+                          src={getImageSource(userData || user)}
                           alt="User"
                           className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/20"
                           onError={handleImageError}
@@ -152,10 +153,10 @@ const UserProfileDropdown = memo(
                         transition={{ delay: 0.2 }}
                       >
                         <p className="text-sm font-medium text-gray-900 dark:text-white">
-                          {userData?.firstName} {userData?.lastName}
+                          {userData?.firstName || user?.firstName || "User"} {userData?.lastName || user?.lastName || ""}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {userData?.email}
+                          {userData?.email || user?.email || ""}
                         </p>
                       </motion.div>
                     </div>
@@ -624,34 +625,30 @@ const Navbar = () => {
 
             {/* Cart */}
             <motion.div
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.1, y: -2 }}
               whileTap={{ scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="relative flex items-center justify-center"
+              className="relative"
             >
               <Link
                 to="/cart"
-                className="w-10 h-10 rounded-full bg-gradient-to-r from-zinc-700 to-blue-700 shadow-md transition-all
-                  hover:shadow-lg hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="p-2.5 rounded-full text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white 
+                  transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 
+                  dark:focus:ring-offset-gray-900 relative block"
                 aria-label="Cart"
               >
-                <div className="flex items-center justify-center w-full h-full">
-                  <FaShoppingCart className="w-4 h-4 text-white transition-transform duration-300" />
-                  <div className="absolute -top-1 -right-1">
-                    {cartItemCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        className="bg-red-500 text-xs font-bold rounded-full px-1 shadow-sm flex items-center justify-center min-w-[18px] h-[18px]"
-                        style={{ color: "#fff" }}
-                      >
-                        {Math.min(cartItemCount, 99)}
-                        {cartItemCount > 99 && "+"}
-                      </motion.span>
-                    )}
-                  </div>
-                </div>
+                <FaShoppingCart className="w-5 h-5" />
+                {cartItemCount > 0 && (
+                  <motion.span
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 shadow-sm flex items-center justify-center min-w-[18px] h-[18px]"
+                  >
+                    {Math.min(cartItemCount, 99)}
+                    {cartItemCount > 99 && "+"}
+                  </motion.span>
+                )}
               </Link>
             </motion.div>
 

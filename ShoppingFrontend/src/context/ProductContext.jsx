@@ -31,6 +31,7 @@ export const ProductProvider = ({ children }) => {
     loading,
     error,
     fetchProducts,
+    getAllProducts: fetchProducts,
     setProducts
   }), [products, loading, error, fetchProducts]);
 

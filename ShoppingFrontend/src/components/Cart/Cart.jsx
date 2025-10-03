@@ -18,27 +18,7 @@ const Cart = () => {
   const navigate = useNavigate();
   const { notifyItemRemovedFromCart, notifyCartCleared, notifyOrderPlaced, notifyNetworkError } = useNotificationHandler();
 
-  // Check for expired deals and update cart
-  const checkDealExpiration = useCallback(async () => {
-    if (!Array.isArray(cart)) return;
 
-    const hasExpiredDeals = cart.some(item => {
-      const dealInfo = item.product?.dealInfo;
-      if (!dealInfo?.endDate) return false;
-      return new Date(dealInfo.endDate) < new Date();
-    });
-
-    if (hasExpiredDeals) {
-      toast.info("Some deals have expired. Cart prices have been updated.");
-      await fetchCart(); // Refresh cart to get updated prices
-    }
-  }, [cart, fetchCart]);
-
-  // Check for expired deals periodically
-  useEffect(() => {
-    const interval = setInterval(checkDealExpiration, 60000); // Check every minute
-    return () => clearInterval(interval);
-  }, [checkDealExpiration]);
 
   // Calculate total price with deals
   const totalPrice = useMemo(() => {
@@ -50,7 +30,12 @@ const Cart = () => {
       const dealInfo = product.dealInfo;
 
       // Check if deal is still valid
-      const isDealValid = dealInfo && new Date(dealInfo.endDate) > new Date();
+      const isDealValid = dealInfo && (() => {
+        const dealIsActive = dealInfo.active !== undefined ? dealInfo.active : dealInfo.isActive;
+        if (!dealIsActive) return false;
+        const endDateTime = new Date(`${dealInfo.endDate}T${dealInfo.endTime || '23:59:59'}`);
+        return endDateTime > new Date();
+      })();
 
       // Apply discount if deal exists and is valid
       const discountedPrice = isDealValid
@@ -71,7 +56,14 @@ const Cart = () => {
       const dealInfo = product.dealInfo;
 
       // Only count savings from valid deals
-      if (dealInfo && new Date(dealInfo.endDate) > new Date()) {
+      const isDealValid = dealInfo && (() => {
+        const dealIsActive = dealInfo.active !== undefined ? dealInfo.active : dealInfo.isActive;
+        if (!dealIsActive) return false;
+        const endDateTime = new Date(`${dealInfo.endDate}T${dealInfo.endTime || '23:59:59'}`);
+        return endDateTime > new Date();
+      })();
+      
+      if (isDealValid) {
         const discount = price * (dealInfo.discountPercentage / 100);
         return total + (discount * quantity);
       }
@@ -86,7 +78,14 @@ const Cart = () => {
     const dealsMap = new Map();
     cart.forEach(item => {
       const dealInfo = item.product?.dealInfo;
-      if (dealInfo && new Date(dealInfo.endDate) > new Date()) {
+      const isDealValid = dealInfo && (() => {
+        const dealIsActive = dealInfo.active !== undefined ? dealInfo.active : dealInfo.isActive;
+        if (!dealIsActive) return false;
+        const endDateTime = new Date(`${dealInfo.endDate}T${dealInfo.endTime || '23:59:59'}`);
+        return endDateTime > new Date();
+      })();
+      
+      if (isDealValid) {
         if (!dealsMap.has(dealInfo.id)) {
           dealsMap.set(dealInfo.id, {
             ...dealInfo,
@@ -208,10 +207,16 @@ const Cart = () => {
   // Empty cart state
   if (!Array.isArray(cart) || cart.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className={`pt-16 min-h-screen flex flex-col items-center justify-center p-4 ${
+        isDarkMode 
+          ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" 
+          : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
+      }`}>
         <div className="text-center max-w-md mx-auto">
           <div className="relative w-24 h-24 mx-auto mb-6">
-            <FaShoppingCart className="w-24 h-24 text-gray-300 dark:text-gray-600" />
+            <FaShoppingCart className={`w-24 h-24 ${
+              isDarkMode ? "text-gray-600" : "text-gray-300"
+            }`} />
             <div className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold">
               0
             </div>
@@ -304,10 +309,10 @@ const Cart = () => {
                     <FaGift className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-green-600 dark:text-green-400">
+                    <h3 className="font-semibold text-green-600 dark:text-green-300">
                       Active Deals ({dealsSummary.count})
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-white">
                       You have {dealsSummary.deals.length} special {dealsSummary.deals.length === 1 ? 'offer' : 'offers'}
                     </p>
                   </div>
@@ -315,7 +320,7 @@ const Cart = () => {
                 {totalSavings > 0 && (
                   <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 dark:bg-green-500/20 rounded-lg">
                     <FaPercent className="text-green-600 dark:text-green-400" />
-                    <span className="font-semibold text-green-600 dark:text-green-400">
+                    <span className="font-semibold text-green-600 dark:text-green-300">
                       Total Savings: ₹{totalSavings.toFixed(2)}
                     </span>
                   </div>
@@ -325,7 +330,7 @@ const Cart = () => {
               {/* Deal Details */}
               <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {dealsSummary.deals.map(deal => (
-                  <div key={deal.id} className="p-3 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+                  <div key={deal.id} className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                       <FaTag className="text-green-500" />
                       <span className="font-medium text-gray-900 dark:text-white">
@@ -333,10 +338,10 @@ const Cart = () => {
                       </span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">
+                      <span className="text-gray-600 dark:text-white">
                         {deal.itemCount} {deal.itemCount === 1 ? 'item' : 'items'}
                       </span>
-                      <span className="text-green-600 dark:text-green-400 font-medium">
+                      <span className="text-green-600 dark:text-green-300 font-medium">
                         Save ₹{deal.totalSavings.toFixed(2)}
                       </span>
                     </div>

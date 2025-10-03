@@ -21,7 +21,7 @@ const OrderSummary = ({
   showCheckoutButton = true,
   loading,
 }) => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
 
   // Calculate subtotal (original price before discounts)
   const subtotal = totalPrice + totalSavings;
@@ -32,15 +32,10 @@ const OrderSummary = ({
     return 100;
   }, [subtotal]);
 
-  // Calculate tax (10% on discounted price)
-  const tax = useMemo(() => {
-    return totalPrice * 0.1;
-  }, [totalPrice]);
-
   // Calculate final total
   const finalTotal = useMemo(() => {
-    return totalPrice + shipping + tax;
-  }, [totalPrice, shipping, tax]);
+    return totalPrice + shipping;
+  }, [totalPrice, shipping]);
 
   // Get active deals from cart
   const activeDeals = useMemo(() => {
@@ -99,7 +94,7 @@ const OrderSummary = ({
   return (
     <div
       className={`rounded-xl p-6 shadow-lg ${
-        isDark ? "bg-gray-800" : "bg-white"
+        isDarkMode ? "bg-gray-800" : "bg-white"
       }`}
     >
       <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
@@ -182,13 +177,7 @@ const OrderSummary = ({
             </span>
           </div>
 
-          <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
-            <span className="flex items-center gap-1">
-              <FaShieldAlt className="text-xs" />
-              Tax (10%) - Included in Total
-            </span>
-            <span className="font-medium">₹{tax.toFixed(2)}</span>
-          </div>
+
         </div>
 
         {/* Shipping Progress Bar */}

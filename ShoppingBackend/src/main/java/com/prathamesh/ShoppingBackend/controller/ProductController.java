@@ -78,13 +78,23 @@ public class ProductController {
     
 
     @PutMapping("/product/{id}")
-    public ResponseEntity<Product> updateProduct(
+    public ResponseEntity<?> updateProduct(
             @PathVariable int id,
             @RequestPart("product") Product product,
-            @RequestPart("images") List<MultipartFile> images) throws IOException {
-        product.setId(id); // Ensure the ID is set
-        Product updatedProduct = productService.updateProduct(product, images);
-        return ResponseEntity.ok(updatedProduct);
+            @RequestPart(value = "images", required = false) List<MultipartFile> images) {
+        try {
+            product.setId(id);
+            Product updatedProduct = productService.updateProduct(product, images);
+            return ResponseEntity.ok(updatedProduct);
+        } catch (IOException e) {
+            logger.error("Error updating product with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error processing images: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error updating product with ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error updating product: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/product/{id}")

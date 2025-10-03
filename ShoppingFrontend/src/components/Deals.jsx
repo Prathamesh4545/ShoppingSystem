@@ -22,6 +22,8 @@ import {
   FaPercent,
   FaGift,
   FaArrowRight,
+  FaFire,
+  FaArrowLeft,
 } from "react-icons/fa";
 
 const DealsPage = () => {
@@ -77,17 +79,9 @@ const DealsPage = () => {
     return format(parseISO(dateString), "dd/MM/yyyy");
   }, []);
 
-  const isDealActive = useCallback((deal) => {
-    const now = new Date();
-    const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
-    const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
-
-    return isAfter(now, startDateTime) && isBefore(now, endDateTime);
-  }, []);
-
   const activeDeals = useMemo(() => {
-    return deals.filter((deal) => isDealActive(deal));
-  }, [deals, isDealActive]);
+    return deals;
+  }, [deals]);
 
   const handleRetry = useCallback(() => {
     setError(null);
@@ -122,20 +116,25 @@ const DealsPage = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-          className="text-center mb-12"
+          className="mb-12"
         >
-          <h1 className={`text-4xl font-bold mb-4 bg-gradient-to-r bg-clip-text text-transparent ${
-            isDarkMode 
-              ? "from-sky-400 via-purple-400 to-sky-400" 
-              : "from-sky-600 via-purple-600 to-sky-600"
-          }`}>
-            Special Deals & Offers
-          </h1>
-          <p className={`text-lg max-w-2xl mx-auto ${
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3 mb-2"
+          >
+            <div className="relative">
+              <div className="absolute inset-0 bg-orange-500 blur-xl opacity-50 animate-pulse"></div>
+              <FaFire className="relative text-5xl text-orange-500" />
+            </div>
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent">
+              Exclusive Deals
+            </h1>
+          </motion.div>
+          <p className={`text-lg ml-16 max-w-3xl ${
             isDarkMode ? 'text-gray-300' : 'text-gray-600'
           }`}>
-            Discover amazing discounts and limited-time offers on our products.
-            Don't miss out on these exclusive deals!
+            Discover amazing discounts and limited-time offers on our products. Don't miss out!
           </p>
         </motion.div>
 
@@ -165,104 +164,121 @@ const DealsPage = () => {
             <ClipLoader color="#3B82F6" size={50} />
           </div>
         ) : Array.isArray(activeDeals) && activeDeals.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <AnimatePresence>
-              {activeDeals.map((deal, index) => (
-                <motion.div
-                  key={deal.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{
-                    delay: index * 0.1,
-                    duration: 0.3,
-                  }}
-                  className={`group relative overflow-hidden rounded-xl shadow-lg backdrop-blur-lg ${
-                    isDarkMode
-                      ? "bg-white/10 border border-white/20"
-                      : "bg-white/70 border border-white/30"
-                  } hover:shadow-xl transition-all duration-300`}
-                >
-                  {/* Deal Badge */}
+              {activeDeals.map((deal, index) => {
+                const timeRemaining = (() => {
+                  try {
+                    const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
+                    const now = new Date();
+                    const diff = endDateTime - now;
+                    if (diff <= 0) return null;
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    if (days > 0) return `${days}d ${hours}h`;
+                    if (hours > 0) return `${hours}h ${minutes}m`;
+                    return `${minutes}m`;
+                  } catch (e) {
+                    return null;
+                  }
+                })();
+
+                return (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                    className="absolute top-4 right-4 z-10"
+                    key={deal.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -12 }}
+                    onClick={() => handleViewProducts(deal.id)}
+                    className={`group relative cursor-pointer overflow-hidden rounded-3xl backdrop-blur-xl border-2 transition-all duration-500 ${
+                      isDarkMode
+                        ? 'bg-gradient-to-br from-gray-900/90 via-purple-900/50 to-blue-900/50 border-white/10 hover:border-purple-500/50 shadow-2xl hover:shadow-purple-500/40'
+                        : 'bg-white border-gray-200 hover:border-purple-400 shadow-xl hover:shadow-2xl hover:shadow-purple-500/20'
+                    }`}
                   >
-                    <div className="bg-gradient-to-r from-red-500 to-red-600 px-3 py-1 rounded-full text-white text-sm font-semibold flex items-center gap-1 shadow-sm">
-                      <FaPercent className="text-xs" />
-                      {deal.discountPercentage}% OFF
+                    {/* Glow Effect */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-2xl"></div>
+                    </div>
+
+                    {/* Deal Badge */}
+                    <div className="absolute top-4 right-4 z-20">
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        className="relative"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 blur-lg opacity-75"></div>
+                        <div className="relative bg-gradient-to-r from-red-500 via-orange-500 to-red-500 text-white px-5 py-2.5 rounded-2xl font-bold shadow-2xl flex items-center gap-2">
+                          <FaPercent className="text-sm" />
+                          <span className="text-lg">{deal.discountPercentage}%</span>
+                        </div>
+                      </motion.div>
+                    </div>
+
+                    {/* Deal Image */}
+                    <div className="relative h-56 overflow-hidden">
+                      <motion.img
+                        src={getImageSrc(deal)}
+                        alt={deal.title}
+                        className="w-full h-full object-cover"
+                        whileHover={{ scale: 1.15 }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                      />
+                      <div className={`absolute inset-0 bg-gradient-to-t transition-opacity duration-500 ${
+                        isDarkMode ? 'from-black/90 via-black/40 to-transparent' : 'from-black/70 via-black/30 to-transparent'
+                      }`} />
+                      
+                      {/* Floating Timer Badge */}
+                      {timeRemaining && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="absolute bottom-4 left-4 backdrop-blur-xl bg-white/20 dark:bg-black/30 border border-white/30 rounded-xl px-4 py-2 flex items-center gap-2"
+                        >
+                          <FaClock className="text-orange-400 animate-pulse" />
+                          <span className="text-white font-semibold text-sm">Ends in {timeRemaining}</span>
+                        </motion.div>
+                      )}
+                    </div>
+
+                    {/* Deal Content */}
+                    <div className="relative p-6 space-y-4">
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-1 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-purple-600 group-hover:bg-clip-text transition-all duration-300">
+                          {deal.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 leading-relaxed">
+                          {deal.description}
+                        </p>
+                      </div>
+
+                      {/* Deal Stats */}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                          <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
+                            <FaTag className="text-green-600 dark:text-green-400 text-sm" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">Products</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{deal.products?.length || 0}</p>
+                          </div>
+                        </div>
+                        <motion.button
+                          whileHover={{ scale: 1.05, x: 5 }}
+                          whileTap={{ scale: 0.95 }}
+                          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+                        >
+                          Shop
+                          <FaArrowLeft className="rotate-180 text-sm" />
+                        </motion.button>
+                      </div>
                     </div>
                   </motion.div>
-
-                  {/* Deal Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <LazyLoadImage
-                      src={getImageSrc(deal)}
-                      alt={deal.title}
-                      effect="blur"
-                      className="w-full h-full object-cover transform scale-100 group-hover:scale-110 transition-transform duration-500 ease-in-out"
-                      placeholderSrc="https://placehold.co/600x400?text=Loading..."
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
-                  </div>
-
-                  {/* Deal Content */}
-                  <div className="p-6">
-                    <h3
-                      className={`text-2xl font-bold mb-4 ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {deal.title}
-                    </h3>
-                    <p
-                      className={`mb-4 line-clamp-2 ${
-                        isDarkMode ? "text-gray-300" : "text-gray-600"
-                      }`}
-                    >
-                      {deal.description}
-                    </p>
-
-                    {/* Deal Info */}
-                    <div className="flex flex-col gap-2">
-                      <div
-                        className={`flex items-center gap-2 text-sm ${
-                          isDarkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        <FaClock className="text-blue-500" />
-                        <span>
-                          Valid from {formatDate(deal.startDate)} to {formatDate(deal.endDate)}
-                        </span>
-                      </div>
-                      <div
-                        className={`flex items-center gap-2 text-sm ${
-                          isDarkMode ? "text-gray-400" : "text-gray-500"
-                        }`}
-                      >
-                        <FaGift className="text-green-500" />
-                        <span>
-                          {Array.isArray(deal.products) ? deal.products.length : 0} Products
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* View Products Button */}
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.15 }}
-                      onClick={() => handleViewProducts(deal.id)}
-                      className="mt-6 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2 shadow-sm font-medium border-none cursor-pointer hover:from-blue-700 hover:to-purple-700"
-                    >
-                      View Products
-                      <FaArrowRight className="w-4 h-4" />
-                    </motion.button>
-                  </div>
-                </motion.div>
-              ))}
+                );
+              })}
             </AnimatePresence>
           </div>
         ) : (

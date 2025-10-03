@@ -50,8 +50,8 @@ const ManageDeals = () => {
           }),
         ]);
 
-        setDeals(dealsResponse.data);
-        setProducts(productsResponse.data);
+        setDeals(Array.isArray(dealsResponse.data) ? dealsResponse.data : []);
+        setProducts(Array.isArray(productsResponse.data) ? productsResponse.data : []);
       } catch (error) {
         if (error.response?.status === 401) {
           logout();
@@ -93,21 +93,21 @@ const ManageDeals = () => {
   // Handle toggling deal status
   const handleToggleStatus = async (id, isActive) => {
     try {
-      console.log('Toggling deal status:', { id, isActive });
       const currentToken = await getValidToken();
       if (!currentToken) return;
 
       await axios.patch(
-        `${API_URL}/deals/${id}/status?isActive=${isActive}`,
-        {},
+        `${API_URL}/deals/${id}/status`,
+        null,
         {
+          params: { isActive },
           headers: { Authorization: `Bearer ${currentToken}` },
         }
       );
 
       setDeals(prevDeals => 
         prevDeals.map(deal => 
-          deal.id === id ? { ...deal, isActive } : deal
+          deal.id === id ? { ...deal, isActive, active: isActive } : deal
         )
       );
       toast.success(`Deal ${isActive ? "activated" : "deactivated"} successfully`);
@@ -117,7 +117,7 @@ const ManageDeals = () => {
         logout();
         toast.error("Session expired. Please login again.");
       } else {
-        toast.error(error.response?.data?.message || "Failed to update deal status");
+        toast.error(error.response?.data || "Failed to update deal status");
       }
     }
   };
@@ -131,7 +131,7 @@ const ManageDeals = () => {
 
       await axios.post(
         `${API_URL}/deals/update-expired`,
-        {},
+        null,
         {
           headers: { Authorization: `Bearer ${currentToken}` },
         }
@@ -149,7 +149,7 @@ const ManageDeals = () => {
         logout();
         toast.error("Session expired. Please login again.");
       } else {
-        toast.error("Failed to update deal statuses");
+        toast.error(error.response?.data || "Failed to update deal statuses");
         console.error("Status update error:", error);
       }
     } finally {

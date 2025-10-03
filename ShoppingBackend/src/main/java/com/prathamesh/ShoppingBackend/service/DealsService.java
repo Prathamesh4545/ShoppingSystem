@@ -5,7 +5,8 @@ import com.prathamesh.ShoppingBackend.model.Deals;
 import com.prathamesh.ShoppingBackend.model.Product;
 import com.prathamesh.ShoppingBackend.repository.DealsRepo;
 import com.prathamesh.ShoppingBackend.repository.ProductRepo;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,9 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Service
-@Slf4j
 public class DealsService {
+
+    private static final Logger log = LoggerFactory.getLogger(DealsService.class);
 
     private final DealsRepo dealsRepo;
     private final ProductRepo productRepo;
@@ -108,6 +110,23 @@ public class DealsService {
         Deals deal = dealsRepo.findById(id)
                 .orElseThrow(() -> new DealNotFoundException("Deal not found with id: " + id));
         dealsRepo.delete(deal);
+    }
+
+    @Transactional
+    @CacheEvict(value = { "deals", "activeDeals" }, allEntries = true)
+    public void updateExpiredDeals() {
+        log.info("Updating expired deals");
+        LocalDate now = LocalDate.now();
+        LocalTime currentTime = LocalTime.now();
+        List<Deals> expiredDeals = dealsRepo.findAll().stream()
+                .filter(deal -> deal.isActive() && 
+                        (deal.getEndDate().isBefore(now) || 
+                        (deal.getEndDate().isEqual(now) && deal.getEndTime().isBefore(currentTime))))
+                .toList();
+        expiredDeals.forEach(deal -> {
+            deal.setActive(false);
+            dealsRepo.save(deal);
+        });
     }
 
     public static void validateDeal(Deals deal) {

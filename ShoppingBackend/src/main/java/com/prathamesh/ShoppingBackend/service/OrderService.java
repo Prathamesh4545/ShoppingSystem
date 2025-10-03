@@ -24,7 +24,7 @@ public class OrderService {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderService.class);
     
-    private static final BigDecimal TAX_RATE = new BigDecimal("0.10");
+    private static final BigDecimal TAX_RATE = BigDecimal.ZERO;
     private static final BigDecimal FREE_SHIPPING_THRESHOLD = new BigDecimal("1000");
     private static final BigDecimal SHIPPING_COST = new BigDecimal("100");
     private static final BigDecimal MAX_TOTAL_VARIANCE = new BigDecimal("0.01");
@@ -156,6 +156,29 @@ public class OrderService {
         } catch (Exception e) {
             logger.error("Failed to delete order: {}", id, e);
             throw new OrderProcessingException("Failed to delete order");
+        }
+    }
+
+    public OrderDTO cancelOrder(Long orderId) {
+        try {
+            Orders order = orderRepo.findById(orderId)
+                    .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
+
+            if (order.getStatus() == Orders.OrderStatus.CANCELLED) {
+                throw new InvalidOrderException("Order is already cancelled");
+            }
+
+            if (order.getStatus() == Orders.OrderStatus.DELIVERED) {
+                throw new InvalidOrderException("Cannot cancel a delivered order");
+            }
+
+            order.setStatus(Orders.OrderStatus.CANCELLED);
+            order.setUpdatedAt(LocalDateTime.now());
+
+            return convertToDTO(orderRepo.save(order));
+        } catch (Exception e) {
+            logger.error("Failed to cancel order: {}", orderId, e);
+            throw new OrderProcessingException("Failed to cancel order: " + e.getMessage());
         }
     }
 

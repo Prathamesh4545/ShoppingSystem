@@ -7,18 +7,55 @@ const DealsTable = ({ deals, loading, onDelete, onEdit, onToggleStatus, hasRole 
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
-  const isCurrentlyActive = (deal) => {
+
+  const getTimeRemaining = (deal) => {
+    if (!deal.startDate || !deal.endDate || !deal.startTime || !deal.endTime) return null;
+    const dealIsActive = deal.active !== undefined ? deal.active : deal.isActive;
+    if (!dealIsActive) return null;
+    
     const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
     const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
-    return deal.isActive && currentTime >= startDateTime && currentTime <= endDateTime;
+    
+    if (currentTime < startDateTime) {
+      const diff = startDateTime - currentTime;
+      return { label: 'Starts in', diff, type: 'scheduled' };
+    } else if (currentTime >= startDateTime && currentTime < endDateTime) {
+      const diff = endDateTime - currentTime;
+      return { label: 'Ends in', diff, type: 'active' };
+    }
+    return null;
+  };
+
+  const formatTimeRemaining = (milliseconds) => {
+    const days = Math.floor(milliseconds / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((milliseconds % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((milliseconds % (1000 * 60)) / 1000);
+    
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
+  };
+  const isCurrentlyActive = (deal) => {
+    if (!deal.active && deal.active !== undefined) return false;
+    if (!deal.isActive && deal.isActive !== undefined) return false;
+    if (!deal.startDate || !deal.endDate || !deal.startTime || !deal.endTime) return false;
+    const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
+    const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
+    return currentTime >= startDateTime && currentTime < endDateTime;
   };
 
   const getStatusInfo = (deal) => {
+    if (!deal.startDate || !deal.endDate || !deal.startTime || !deal.endTime) {
+      return { status: 'Invalid', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' };
+    }
+    const dealIsActive = deal.active !== undefined ? deal.active : deal.isActive;
     const currentlyActive = isCurrentlyActive(deal);
-    if (!deal.isActive) {
+    if (!dealIsActive) {
       return { status: 'Inactive', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400' };
     }
     if (currentlyActive) {
@@ -74,6 +111,9 @@ const DealsTable = ({ deals, loading, onDelete, onEdit, onToggleStatus, hasRole 
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                 Status
               </th>
+              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                Timer
+              </th>
               {hasRole("ADMIN") && (
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
@@ -97,13 +137,16 @@ const DealsTable = ({ deals, loading, onDelete, onEdit, onToggleStatus, hasRole 
                         <img
                           className="h-16 w-16 rounded-lg object-cover"
                           src={deal.imageUrl}
-                          alt={deal.title}
+                          alt={deal.title || 'Deal image'}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
                         />
-                      ) : (
-                        <div className="h-16 w-16 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                          <FaImage className="h-8 w-8 text-gray-400" />
-                        </div>
-                      )}
+                      ) : null}
+                      <div className="h-16 w-16 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center" style={{ display: deal.imageUrl ? 'none' : 'flex' }}>
+                        <FaImage className="h-8 w-8 text-gray-400" />
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -137,22 +180,42 @@ const DealsTable = ({ deals, loading, onDelete, onEdit, onToggleStatus, hasRole 
                       {getStatusInfo(deal).status}
                     </span>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {(() => {
+                      const timeInfo = getTimeRemaining(deal);
+                      if (!timeInfo) return <span className="text-gray-400 dark:text-gray-500 text-sm">-</span>;
+                      return (
+                        <div className="flex flex-col gap-1">
+                          <span className={`text-xs font-medium ${
+                            timeInfo.type === 'active' 
+                              ? 'text-green-600 dark:text-green-400' 
+                              : 'text-blue-600 dark:text-blue-400'
+                          }`}>
+                            {timeInfo.label}
+                          </span>
+                          <span className="text-sm font-mono font-semibold text-gray-900 dark:text-white">
+                            {formatTimeRemaining(timeInfo.diff)}
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </td>
                   {hasRole("ADMIN") && (
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Toggle clicked for deal:', deal.id, 'current status:', deal.isActive);
-                            onToggleStatus && onToggleStatus(deal.id, !deal.isActive);
+                          type="button"
+                          onClick={() => {
+                            const currentActive = deal.active !== undefined ? deal.active : deal.isActive;
+                            onToggleStatus && onToggleStatus(deal.id, !currentActive);
                           }}
                           className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200"
-                          title={deal.isActive ? "Deactivate" : "Activate"}
+                          title={(deal.active !== undefined ? deal.active : deal.isActive) ? "Deactivate" : "Activate"}
                         >
-                          {deal.isActive ? <FaToggleOn className="w-5 h-5 text-green-500" /> : <FaToggleOff className="w-5 h-5 text-red-500" />}
+                          {(deal.active !== undefined ? deal.active : deal.isActive) ? <FaToggleOn className="w-6 h-6 text-green-500" /> : <FaToggleOff className="w-6 h-6 text-gray-400" />}
                         </button>
                         <button
+                          type="button"
                           onClick={() => onEdit(deal)}
                           className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
                           title="Edit Deal"
@@ -160,7 +223,12 @@ const DealsTable = ({ deals, loading, onDelete, onEdit, onToggleStatus, hasRole 
                           <FaEdit className="w-5 h-5" />
                         </button>
                         <button
-                          onClick={() => onDelete(deal.id)}
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Are you sure you want to delete "${deal.title}"?`)) {
+                              onDelete(deal.id);
+                            }
+                          }}
                           className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
                           title="Delete Deal"
                         >

@@ -10,10 +10,14 @@ import com.prathamesh.ShoppingBackend.repository.ProductRepo;
 import jakarta.transaction.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -28,11 +32,17 @@ public class CartService {
     @Autowired
     private ProductRepo productRepo;
 
+    @Autowired
+    private com.prathamesh.ShoppingBackend.repository.DealsRepo dealsRepo;
+
     public CartDTO getCart(User user) {
         try {
             Cart cart = cartRepo.findByUser(user).orElseGet(() -> createNewCart(user));
-            return convertToCartDTO(cart);
+            CartDTO cartDTO = convertToCartDTO(cart);
+            return cartDTO;
         } catch (Exception e) {
+            System.err.println("Error fetching cart: " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("Failed to fetch cart: " + e.getMessage());
         }
     }
@@ -65,8 +75,8 @@ public class CartService {
                 cart.getItems().add(newItem);
             }
 
-            cartRepo.save(cart);
-            return convertToCartDTO(cart);
+            Cart savedCart = cartRepo.save(cart);
+            return convertToCartDTO(savedCart);
         } catch (Exception e) {
             throw new RuntimeException("Failed to add item to cart: " + e.getMessage());
         }
@@ -81,16 +91,36 @@ public class CartService {
     private CartDTO convertToCartDTO(Cart cart) {
         CartDTO cartDTO = new CartDTO();
 
+        // Fetch all active deals once to avoid N+1 queries
+        java.util.Map<Integer, Deals> productDealsMap = new java.util.HashMap<>();
+        try {
+            cart.getItems().stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.getProduct() != null)
+                .forEach(item -> {
+                    try {
+                        List<Deals> deals = dealsRepo.findActiveDealsForProduct(item.getProduct().getId(), new Date());
+                        if (!deals.isEmpty()) {
+                            productDealsMap.put(item.getProduct().getId(), deals.get(0));
+                        }
+                    } catch (Exception e) {
+                        // Skip if deal fetch fails
+                    }
+                });
+        } catch (Exception e) {
+            // Continue without deals if fetch fails
+        }
+
         // Convert cart items to DTOs
         List<CartItemDTO> validItems = cart.getItems().stream()
-                .filter(Objects::nonNull) // Filter out null items
-                .filter(item -> item.getProduct() != null) // Filter out items with null products
-                .map(this::convertToCartItemDTO)
+                .filter(Objects::nonNull)
+                .filter(item -> item.getProduct() != null)
+                .map(item -> convertToCartItemDTO(item, productDealsMap))
                 .collect(Collectors.toList());
 
         cartDTO.setItems(validItems);
         cartDTO.setTotalItems(validItems.size());
-        cartDTO.setTotalPrice(calculateTotalPrice(validItems).doubleValue()); // Use the fixed method
+        cartDTO.setTotalPrice(calculateTotalPrice(validItems).doubleValue());
 
         return cartDTO;
     }
@@ -99,17 +129,26 @@ public class CartService {
         CartItemDTO dto = new CartItemDTO();
         dto.setId(item.getId());
         dto.setQuantity(item.getQuantity());
-        dto.setProduct(convertToProductDTO(item.getProduct()));
+        dto.setProduct(convertToProductDTO(item.getProduct(), null));
         return dto;
     }
 
-    private ProductDTO convertToProductDTO(Product product) {
+    private CartItemDTO convertToCartItemDTO(CartItem item, java.util.Map<Integer, Deals> dealsMap) {
+        CartItemDTO dto = new CartItemDTO();
+        dto.setId(item.getId());
+        dto.setQuantity(item.getQuantity());
+        dto.setProduct(convertToProductDTO(item.getProduct(), dealsMap.get(item.getProduct().getId())));
+        return dto;
+    }
+
+    private ProductDTO convertToProductDTO(Product product, Deals deal) {
         ProductDTO dto = new ProductDTO();
         dto.setId(product.getId());
         dto.setProductName(product.getProductName());
         dto.setBrand(product.getBrand());
         dto.setPrice(product.getPrice());
         dto.setQuantity(product.getQuantity());
+        dto.setDealInfo(deal);
         return dto;
     }
 

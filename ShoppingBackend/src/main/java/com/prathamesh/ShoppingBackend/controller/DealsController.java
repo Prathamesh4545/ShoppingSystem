@@ -139,6 +139,19 @@ public class DealsController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/update-expired")
+    public ResponseEntity<Void> updateExpiredDeals() {
+        dealsService.updateExpiredDeals();
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Deals> toggleDealStatus(@PathVariable int id, @RequestParam boolean isActive) {
+        Deals deal = dealsService.getDealById(id);
+        deal.setActive(isActive);
+        return ResponseEntity.ok(dealsService.updateDeal(id, deal));
+    }
+
     @ExceptionHandler(DealNotFoundException.class)
     public ResponseEntity<String> handleDealNotFoundException(DealNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());

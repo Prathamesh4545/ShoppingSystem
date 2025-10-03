@@ -148,10 +148,23 @@ public class AnalyticsService {
         return orderItemRepo.getTopSellingProducts().stream()
             .limit(limit)
             .map(data -> {
+                Long productId = ((Number) data.get("productId")).longValue();
+                Optional<Product> productOpt = productRepo.findById(productId.intValue());
+                
                 Map<String, Object> productMap = new LinkedHashMap<>();
-                productMap.put("productId", data.get("productId"));
-                productMap.put("totalQuantity", data.get("totalQuantity"));
-                productMap.put("totalRevenue", roundToTwoDecimals(((Number) data.get("totalRevenue")).doubleValue()));
+                productMap.put("productId", productId);
+                productMap.put("sales", data.get("totalQuantity"));
+                productMap.put("revenue", roundToTwoDecimals(((Number) data.get("totalRevenue")).doubleValue()));
+                
+                if (productOpt.isPresent()) {
+                    Product product = productOpt.get();
+                    productMap.put("name", product.getProductName());
+                    productMap.put("category", product.getCategory());
+                } else {
+                    productMap.put("name", "Product Not Found");
+                    productMap.put("category", "N/A");
+                }
+                
                 return productMap;
             })
             .collect(Collectors.toList());

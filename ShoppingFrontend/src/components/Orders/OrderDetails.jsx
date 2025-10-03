@@ -112,7 +112,7 @@ const OrderDetails = () => {
       toast.error("Missing required information to fetch order details");
       navigate("/");
     }
-  }, [orderId, token, user?.id, navigate, products, getAllProducts]);
+  }, [orderId, token, user?.id]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -240,8 +240,7 @@ const OrderDetails = () => {
   const totalSavings = calculateTotalSavings(order.items);
   const subtotal = originalSubtotal - totalSavings; // Subtotal after discounts
   const shipping = subtotal >= 1000 ? 0 : 100; // Free shipping over ₹1000
-  const tax = subtotal * 0.1; // 10% tax on discounted price
-  const finalTotal = subtotal + shipping + tax;
+  const finalTotal = subtotal + shipping;
 
   return (
     <div className={`pt-16 min-h-screen ${
@@ -465,17 +464,6 @@ const OrderDetails = () => {
                     {shipping.toFixed(2)}
                   </>
                 )}
-              </span>
-            </div>
-
-            <div className="flex justify-between items-center text-gray-600 dark:text-gray-400">
-              <span className="flex items-center gap-1">
-                <FaShieldAlt className="text-xs" />
-                Tax (10%)
-              </span>
-              <span className="font-medium">
-                <FaRupeeSign className="inline-block" />
-                {tax.toFixed(2)}
               </span>
             </div>
 

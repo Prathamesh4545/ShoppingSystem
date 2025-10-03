@@ -12,7 +12,7 @@ import { useNotificationHandler } from "../../hooks/useNotificationHandler";
 import "react-toastify/dist/ReactToastify.css";
 
 const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
-  const { isDark } = useContext(ThemeContext);
+  const { isDarkMode } = useContext(ThemeContext);
   const { isAuthenticated, logout, login } = useAuth();
   const { fetchCart } = useCart();
   const [showPassword, setShowPassword] = useState(false);
@@ -56,14 +56,14 @@ const LoginForm = ({ showLoginModal, onClose, onSwitchToRegister }) => {
       size="md"
       onClose={onClose}
       popup
-      className={`z-50 ${isDark ? "bg-gray-800" : "bg-white"}`}
+      className={`z-50 ${isDarkMode ? "bg-gray-800" : "bg-white"}`}
     >
       <Modal.Header
         className={`border-b ${
-          isDark ? "border-gray-700" : "border-gray-200"
+          isDarkMode ? "border-gray-700" : "border-gray-200"
         } p-4`}
       >
-        <div className={`text-xl font-semibold ${isDark ? "text-white" : "text-gray-800"}`}>
+        <div className={`text-xl font-semibold ${isDarkMode ? "text-white" : "text-gray-800"}`}>
           {isAuthenticated ? "Your Profile" : "Login to your account"}
         </div>
       </Modal.Header>

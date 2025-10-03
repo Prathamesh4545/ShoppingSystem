@@ -129,6 +129,34 @@ public class OrderController {
         }
     }
 
+    @PutMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateOrderStatusPut(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, String> request) {
+        try {
+            String status = request.get("status");
+            if (status == null || status.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Status cannot be empty");
+            }
+            return ResponseEntity.ok(orderService.updateOrderStatus(orderId, status));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error updating order status", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to update order status");
+        }
+    }
+
+    @PatchMapping("/{orderId}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateOrderStatusPatch(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, String> request) {
+        return updateOrderStatusPut(orderId, request);
+    }
+
     @GetMapping("/user/{userId}/status-counts")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<?> getOrderCountsByStatusForUser(@PathVariable String userId) {
@@ -206,6 +234,36 @@ public class OrderController {
             logger.error("Error fetching order", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to fetch order");
+        }
+    }
+
+    @PutMapping("/{orderId}/cancel")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<?> cancelOrder(
+            @PathVariable Long orderId,
+            @RequestHeader("Authorization") String token) {
+        try {
+            if (token == null || !token.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+
+            token = token.replace("Bearer ", "").trim();
+            String username = jwtService.extractUserName(token);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+            if (!jwtService.validateToken(token, userDetails)) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+            }
+
+            return ResponseEntity.ok(orderService.cancelOrder(orderId));
+        } catch (MalformedJwtException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid token");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Error cancelling order", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to cancel order");
         }
     }
 }

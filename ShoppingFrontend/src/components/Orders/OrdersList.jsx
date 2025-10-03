@@ -15,7 +15,6 @@ import {
   FaClock,
   FaTag,
   FaRupeeSign,
-  FaTrash,
   FaSearch,
   FaFilter,
   FaSort,
@@ -35,8 +34,7 @@ const OrdersList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [sortBy, setSortBy] = useState("newest");
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
 
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
@@ -45,7 +43,7 @@ const OrdersList = () => {
       return;
     }
     fetchOrders();
-  }, [isAuthenticated, user?.id]);
+  }, []);
 
   const fetchOrders = async () => {
     try {
@@ -102,34 +100,7 @@ const OrdersList = () => {
     }
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    try {
-      await axios.delete(`${API_URL}/orders/${orderId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
 
-      setOrders(orders.filter(order => order.id !== orderId));
-      toast.success("Order deleted successfully!");
-      setShowDeleteModal(false);
-      setSelectedOrder(null);
-    } catch (error) {
-      console.error("Delete error:", error);
-      
-      if (error.response?.status === 404) {
-        setOrders(orders.filter(order => order.id !== orderId));
-        toast.warning("Order not found or already deleted.");
-      } else if (error.response?.status === 403) {
-        toast.error("You don't have permission to delete this order.");
-      } else {
-        toast.error("Failed to delete order. Please try again.");
-      }
-      
-      setShowDeleteModal(false);
-      setSelectedOrder(null);
-    }
-  };
 
   const handleViewOrder = (orderId) => {
     navigate(`/orders/${orderId}`);
@@ -379,16 +350,7 @@ const OrdersList = () => {
                           Cancel
                         </button>
                       )}
-                      <button
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setShowDeleteModal(true);
-                        }}
-                        className="p-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
-                        title="Delete order"
-                      >
-                        <FaTrash className="w-5 h-5" />
-                      </button>
+
                     </div>
                   </div>
 
@@ -432,47 +394,7 @@ const OrdersList = () => {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showDeleteModal && selectedOrder && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-          >
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
-              <h3 className="text-xl font-bold mb-4 dark:text-gray-100">
-                Confirm Delete
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Are you sure you want to delete order #{selectedOrder.id}? This action cannot be undone.
-              </p>
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-                <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                  <strong>Note:</strong> Only orders that haven't been processed can be deleted.
-                </p>
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                    setSelectedOrder(null);
-                  }}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleDeleteOrder(selectedOrder.id)}
-                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
-                >
-                  Delete Order
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
     </div>
   );
 };

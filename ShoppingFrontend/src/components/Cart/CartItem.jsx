@@ -9,7 +9,7 @@ import { FaTag, FaClock, FaPercent, FaExclamationCircle, FaTrash } from "react-i
 
 const CartItem = React.memo(
   ({ item, handleIncrement, handleDecrement, removeFromCart }) => {
-    const { isDark } = useContext(ThemeContext);
+    const { isDarkMode } = useContext(ThemeContext);
     const product = item.product || {};
     const price = product.price || 0;
     const quantity = item.quantity || 0;
@@ -63,7 +63,7 @@ const CartItem = React.memo(
 
     return (
       <div className={`relative flex flex-col sm:flex-row items-start gap-6 p-6 rounded-xl shadow-md transition-all duration-300 hover:shadow-lg ${
-        isDark ? "bg-gray-800/50 hover:bg-gray-800" : "bg-white hover:bg-gray-50"
+        isDarkMode ? "bg-gray-800/50 hover:bg-gray-800" : "bg-white hover:bg-gray-50"
       }`}>
         {/* Deal Badge */}
         {isDealValid && (
@@ -80,8 +80,8 @@ const CartItem = React.memo(
           <img
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
             src={
-              product.images?.[0]?.imageData
-                ? `data:image/jpeg;base64,${product.images[0].imageData}`
+              product.images?.[0]?.imageData && product.images[0]?.imageType
+                ? `data:${product.images[0].imageType};base64,${product.images[0].imageData}`
                 : "/images/placeholder.webp"
             }
             alt={product.productName || "Product image"}

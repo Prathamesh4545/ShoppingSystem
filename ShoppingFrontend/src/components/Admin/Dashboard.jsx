@@ -186,30 +186,47 @@ const Dashboard = () => {
           } p-6 md:p-8`}
         >
           {/* Welcome Section */}
-          <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+          >
             <div className="relative">
-              <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent mb-2 leading-tight">
-                Welcome back, {user?.firstName || 'Admin'}
-              </h1>
-              <p className={isDarkMode ? "text-slate-300" : "text-slate-600"}>
-                Here's what's happening with your store today.
-              </p>
-              <div className="absolute -top-2 -left-2 w-20 h-20 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-xl" />
+              <motion.h1 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+                className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 leading-tight"
+              >
+                Welcome back, {user?.firstName || 'Admin'} 👋
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className={`text-lg ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}
+              >
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </motion.p>
+              <div className="absolute -top-4 -left-4 w-24 h-24 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full blur-2xl animate-pulse" />
             </div>
             <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
               whileHover={{ scale: 1.05, y: -2 }}
               whileTap={{ scale: 0.95 }}
               onClick={refetch}
-              className={`px-6 py-3 rounded-xl font-medium backdrop-blur-md border transition-all duration-300 shadow-lg hover:shadow-xl ${
+              className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium backdrop-blur-md border transition-all duration-300 shadow-lg hover:shadow-2xl ${
                 isDarkMode
                   ? "bg-gradient-to-r from-sky-800/80 to-sky-700/80 border-sky-600/50 text-white hover:from-sky-700/80 hover:to-sky-600/80"
                   : "bg-gradient-to-r from-sky-500/80 to-sky-600/80 border-sky-400/50 text-white hover:from-sky-600/80 hover:to-sky-700/80"
               }`}
             >
-              <FiRefreshCw className="w-4 h-4 mr-2" />
-              <span>Refresh Data</span>
+              <FiRefreshCw className="w-5 h-5" />
+              <span>Refresh</span>
             </motion.button>
-          </div>
+          </motion.div>
 
           {/* Stats Cards */}
           <div className="mb-10">
@@ -217,58 +234,79 @@ const Dashboard = () => {
           </div>
 
           {/* Charts Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8"
+          >
             <ChartCard
-              title="Daily Orders"
+              title="📊 Daily Orders"
               ChartComponent={Bar}
               data={salesChartData}
               gradient="from-blue-500 via-indigo-500 to-purple-600"
               chartType="bar"
             />
             <ChartCard
-              title="Revenue Trends"
+              title="💰 Revenue Trends"
               ChartComponent={Line}
               data={revenueChartData}
               gradient="from-emerald-500 via-teal-500 to-cyan-600"
               chartType="line"
             />
-          </div>
+          </motion.div>
           
           {/* Additional Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-6 lg:mt-8"
+          >
             <ChartCard
-              title="Product Categories"
+              title="🏷️ Product Categories"
               ChartComponent={Doughnut}
               data={categoryData}
               gradient="from-orange-500 via-pink-500 to-rose-600"
               chartType="doughnut"
             />
-            <div className={`p-8 rounded-2xl backdrop-blur-sm border transition-all duration-300 hover:shadow-2xl ${
-              isDarkMode 
-                ? "bg-white/5 border-white/10 shadow-purple-500/10 hover:bg-white/10" 
-                : "bg-white/70 border-white/50 shadow-sky-500/10 hover:bg-white/80"
-            }`}>
-              <h3 className={`text-xl font-semibold mb-6 ${
+            <motion.div 
+              whileHover={{ scale: 1.02 }}
+              className={`p-8 rounded-2xl backdrop-blur-sm border transition-all duration-300 hover:shadow-2xl ${
+                isDarkMode 
+                  ? "bg-white/5 border-white/10 shadow-purple-500/10 hover:bg-white/10" 
+                  : "bg-white/70 border-white/50 shadow-sky-500/10 hover:bg-white/80"
+              }`}
+            >
+              <h3 className={`text-2xl font-bold mb-6 flex items-center gap-2 ${
                 isDarkMode ? "text-slate-200" : "text-slate-800"
               }`}>
-                Quick Actions
+                ⚡ Quick Actions
               </h3>
               <div className="grid grid-cols-2 gap-4">
-                <Link to="/products/add" className="p-4 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:scale-105 block text-center">
-                  Add Product
-                </Link>
-                <Link to="/orders" className="p-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-medium hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 transform hover:scale-105 block text-center">
-                  View Orders
-                </Link>
-                <Link to="/users" className="p-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-all duration-200 transform hover:scale-105 block text-center">
-                  Manage Users
-                </Link>
-                <Link to="/analytics" className="p-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 text-white font-medium hover:from-orange-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 block text-center">
-                  Analytics
-                </Link>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                  <Link to="/admin/products" className="p-5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl block text-center">
+                    📦 Products
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                  <Link to="/admin/deals" className="p-5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-semibold hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl block text-center">
+                    🔥 Deals
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                  <Link to="/admin/users" className="p-5 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 text-white font-semibold hover:from-purple-600 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl block text-center">
+                    👥 Users
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                  <Link to="/admin/shipping" className="p-5 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 text-white font-semibold hover:from-orange-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl block text-center">
+                    🚚 Shipping
+                  </Link>
+                </motion.div>
               </div>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </Suspense>
     </div>

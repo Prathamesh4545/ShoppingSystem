@@ -6,15 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Entity
 @Table(name = "orders")
 public class Orders {
@@ -53,7 +46,7 @@ public class Orders {
 
     @ManyToOne
     @JoinColumn(name = "address_id")
-    @JsonManagedReference
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Address address;
 
     @PrePersist
@@ -76,4 +69,53 @@ public class Orders {
 
     @Column(name = "tax_amount", precision = 19, scale = 2)
     private BigDecimal taxAmount;
+
+    public Orders() {}
+
+    public Orders(Long id, Long userId, BigDecimal totalAmount, LocalDateTime createdAt, OrderStatus status, LocalDateTime updatedAt, List<OrderItem> items, Address address, BigDecimal subtotalAmount, BigDecimal shippingCost, BigDecimal taxAmount) {
+        this.id = id;
+        this.userId = userId;
+        this.totalAmount = totalAmount;
+        this.createdAt = createdAt;
+        this.status = status;
+        this.updatedAt = updatedAt;
+        this.items = items;
+        this.address = address;
+        this.subtotalAmount = subtotalAmount;
+        this.shippingCost = shippingCost;
+        this.taxAmount = taxAmount;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public OrderStatus getStatus() { return status; }
+    public void setStatus(OrderStatus status) { this.status = status; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public List<OrderItem> getItems() { return items; }
+    public void setItems(List<OrderItem> items) { this.items = items; }
+
+    public Address getAddress() { return address; }
+    public void setAddress(Address address) { this.address = address; }
+
+    public BigDecimal getSubtotalAmount() { return subtotalAmount; }
+    public void setSubtotalAmount(BigDecimal subtotalAmount) { this.subtotalAmount = subtotalAmount; }
+
+    public BigDecimal getShippingCost() { return shippingCost; }
+    public void setShippingCost(BigDecimal shippingCost) { this.shippingCost = shippingCost; }
+
+    public BigDecimal getTaxAmount() { return taxAmount; }
+    public void setTaxAmount(BigDecimal taxAmount) { this.taxAmount = taxAmount; }
 }

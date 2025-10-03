@@ -142,6 +142,3 @@ To deploy the project, follow these steps:
    ```
 
 We encourage you to explore, test, and contribute to ShoppingSystem to help enhance its functionality and user experience. Thank you for your participation, and happy coding! 🚀
-=======
-# ShoppingSystem
->>>>>>> 5a268b6a32714174a8429ace24fbfde7ef0209bd

@@ -1,20 +1,14 @@
 import axios from "axios";
 
+// CSRF is disabled on backend for stateless JWT authentication
 export const initializeCSRFProtection = async () => {
-  try {
-    const response = await axios.get("/api/csrf-token");
-    return response.data.token;
-  } catch (error) {
-    console.error("Failed to fetch CSRF token:", error);
-    return null;
-  }
+  return null; // No CSRF token needed
 };
 
 export const createSecureAxiosInstance = (token) => {
   const instance = axios.create({
     headers: {
-      "X-CSRF-TOKEN": token,
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${token || localStorage.getItem("token")}`,
     },
   });
   return instance;

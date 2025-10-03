@@ -25,4 +25,8 @@ public interface DealsRepo extends JpaRepository<Deals, Integer> {
 
     Optional<Deals> findById(int id);
     
+    @Query("SELECT DISTINCT d FROM Deals d LEFT JOIN FETCH d.products p WHERE p.id = :productId " +
+            "AND d.isActive = true AND d.endDate >= :currentDate")
+    List<Deals> findActiveDealsForProduct(@Param("productId") int productId, 
+                                          @Param("currentDate") java.util.Date currentDate);
 }

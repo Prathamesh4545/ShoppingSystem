@@ -14,22 +14,55 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - shopping-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: shopping-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - shopping-network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
 
   backend:
     build: ./ShoppingBackend
     container_name: shopping-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/ShoppingSystemDB
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: root8080
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://database:5432/ShoppingSystemDB
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: root8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       FRONTEND_URL: http://localhost:3000
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
     ports:
       - "8080:8080"
     depends_on:
-      - database
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - shopping-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build: ./ShoppingFrontend
@@ -43,6 +76,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   shopping-network:

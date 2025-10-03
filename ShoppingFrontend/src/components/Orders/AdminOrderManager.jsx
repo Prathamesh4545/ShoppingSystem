@@ -116,15 +116,13 @@ const AdminOrderManager = () => {
     setUpdateLoading(true);
     try {
       const response = await axios.put(
-        `${API_URL}/orders/${orderId}`,
+        `${API_URL}/orders/${orderId}/status`,
         { status: newStatus },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-          },
-          withCredentials: true
+            'Content-Type': 'application/json'
+          }
         }
       );
 
@@ -376,13 +374,13 @@ const AdminOrderManager = () => {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className={`px-4 py-3 rounded-xl backdrop-blur-md border transition-all duration-300 shadow-lg ${
                   isDarkMode
-                    ? "bg-white/5 border-white/10 text-white focus:bg-white/10 focus:border-sky-400/50"
+                    ? "bg-slate-800 border-white/10 text-white focus:bg-slate-700 focus:border-sky-400/50"
                     : "bg-white/50 border-white/30 text-slate-900 focus:bg-white/70 focus:border-sky-500/50"
                 } focus:outline-none focus:ring-2 focus:ring-sky-500/20`}
               >
-                <option value="ALL">All Status</option>
+                <option value="ALL" className={isDarkMode ? "bg-slate-800 text-white" : "bg-white text-slate-900"}>All Status</option>
                 {validStatuses.map((status) => (
-                  <option key={status} value={status}>
+                  <option key={status} value={status} className={isDarkMode ? "bg-slate-800 text-white" : "bg-white text-slate-900"}>
                     {status}
                   </option>
                 ))}
@@ -392,14 +390,14 @@ const AdminOrderManager = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className={`px-4 py-3 rounded-xl backdrop-blur-md border transition-all duration-300 shadow-lg ${
                   isDarkMode
-                    ? "bg-white/5 border-white/10 text-white focus:bg-white/10 focus:border-sky-400/50"
+                    ? "bg-slate-800 border-white/10 text-white focus:bg-slate-700 focus:border-sky-400/50"
                     : "bg-white/50 border-white/30 text-slate-900 focus:bg-white/70 focus:border-sky-500/50"
                 } focus:outline-none focus:ring-2 focus:ring-sky-500/20`}
               >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="highest">Highest Amount</option>
-                <option value="lowest">Lowest Amount</option>
+                <option value="newest" className={isDarkMode ? "bg-slate-800 text-white" : "bg-white text-slate-900"}>Newest First</option>
+                <option value="oldest" className={isDarkMode ? "bg-slate-800 text-white" : "bg-white text-slate-900"}>Oldest First</option>
+                <option value="highest" className={isDarkMode ? "bg-slate-800 text-white" : "bg-white text-slate-900"}>Highest Amount</option>
+                <option value="lowest" className={isDarkMode ? "bg-slate-800 text-white" : "bg-white text-slate-900"}>Lowest Amount</option>
               </select>
             </div>
           </motion.div>

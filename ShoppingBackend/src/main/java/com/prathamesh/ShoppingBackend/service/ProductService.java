@@ -49,8 +49,14 @@ public class ProductService {
 
         if (imageFiles != null && !imageFiles.isEmpty()) {
             for (MultipartFile file : imageFiles) {
+                if (file.isEmpty() || file.getSize() == 0) {
+                    continue;
+                }
                 if (file.getSize() > MAX_FILE_SIZE) {
                     throw new IllegalArgumentException("File size exceeds the limit of 20MB: " + file.getOriginalFilename());
+                }
+                if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+                    continue;
                 }
 
                 ProductImage image = new ProductImage();
@@ -68,32 +74,50 @@ public class ProductService {
 
     @Transactional
     public Product updateProduct(Product product, List<MultipartFile> imageFiles) throws IOException {
-        Optional<Product> existingProduct = productRepo.findById(product.getId());
-        if (existingProduct.isPresent()) {
-            Product updatedProduct = productRepo.save(product);
+        Product existingProduct = productRepo.findById(product.getId())
+            .orElseThrow(() -> new RuntimeException("Product not found with ID: " + product.getId()));
+        
+        existingProduct.setProductName(product.getProductName());
+        existingProduct.setBrand(product.getBrand());
+        existingProduct.setDesc(product.getDesc());
+        existingProduct.setCategory(product.getCategory());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setQuantity(product.getQuantity());
+        existingProduct.setAvailable(product.isAvailable());
+        existingProduct.setReleaseDate(product.getReleaseDate());
+        
+        Product updatedProduct = productRepo.save(existingProduct);
 
             if (imageFiles != null && !imageFiles.isEmpty()) {
-                productImageRepository.deleteByProductId(product.getId());
+                boolean hasValidImages = imageFiles.stream()
+                    .anyMatch(file -> !file.isEmpty() && file.getSize() > 0 && file.getContentType() != null && file.getContentType().startsWith("image/"));
+                
+                if (hasValidImages) {
+                    productImageRepository.deleteByProductId(product.getId());
 
-                for (MultipartFile file : imageFiles) {
-                    if (file.getSize() > MAX_FILE_SIZE) {
-                        throw new IllegalArgumentException("File size exceeds the limit of 20MB: " + file.getOriginalFilename());
+                    for (MultipartFile file : imageFiles) {
+                        if (file.isEmpty() || file.getSize() == 0) {
+                            continue;
+                        }
+                        if (file.getSize() > MAX_FILE_SIZE) {
+                            throw new IllegalArgumentException("File size exceeds the limit of 20MB: " + file.getOriginalFilename());
+                        }
+                        if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
+                            continue;
+                        }
+
+                        ProductImage image = new ProductImage();
+                        image.setImageName(file.getOriginalFilename());
+                        image.setImageType(file.getContentType());
+                        image.setImageData(file.getBytes());
+                        image.setProduct(updatedProduct);
+
+                        productImageRepository.save(image);
                     }
-
-                    ProductImage image = new ProductImage();
-                    image.setImageName(file.getOriginalFilename());
-                    image.setImageType(file.getContentType());
-                    image.setImageData(file.getBytes());
-                    image.setProduct(updatedProduct);
-
-                    productImageRepository.save(image);
                 }
             }
 
-            return updatedProduct;
-        } else {
-            throw new RuntimeException("Product not found with ID: " + product.getId());
-        }
+        return updatedProduct;
     }
 
     @Transactional

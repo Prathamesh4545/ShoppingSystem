@@ -30,18 +30,24 @@ const Analytics = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const fetchAnalyticsData = useCallback(async () => {
-    if (!token) return;
+    if (!token) {
+      console.error('No token available');
+      return;
+    }
 
     try {
       setLoading(true);
+      setError(null);
       
       // Fetch products first if not already loaded
       if (!products || products.length === 0) {
+        console.log('Fetching products...');
         await getAllProducts();
       }
 
       // Then fetch analytics data
       const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      console.log('Fetching analytics data...');
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/analytics`, {
         headers: {
           'Authorization': formattedToken,
@@ -50,41 +56,29 @@ const Analytics = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch analytics data');
+        const errorText = await response.text();
+        console.error('Analytics API error:', response.status, errorText);
+        throw new Error(`Failed to fetch analytics data: ${response.status}`);
       }
 
       const data = await response.json();
+      console.log('Analytics data received:', data);
 
-      // Enhance top products with full product details
-      if (data.topProducts) {
+      // Enhance top products with image data
+      if (data.topProducts && products && products.length > 0) {
         data.topProducts = data.topProducts.map(topProduct => {
           const fullProduct = products.find(p => p.id === topProduct.productId);
           return {
             ...topProduct,
-            name: fullProduct?.productName || 'Product Not Found',
-            category: fullProduct?.category || 'N/A',
             image: fullProduct?.images?.[0]?.imageData || null
           };
         });
       }
 
-      // Enhance category data with product counts
-      if (data.categoryData) {
-        const categoryCount = products.reduce((acc, product) => {
-          acc[product.category] = (acc[product.category] || 0) + 1;
-          return acc;
-        }, {});
-
-        data.categoryData = {
-          labels: Object.keys(categoryCount),
-          values: Object.values(categoryCount)
-        };
-      }
-
       setAnalyticsData(data);
       setIsInitialLoad(false);
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error('Error fetching analytics data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -139,7 +133,16 @@ const Analytics = () => {
     );
   }
 
-  const stats = analyticsData?.stats || {};
+  const stats = analyticsData?.stats || {
+    totalUsers: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    totalProducts: 0,
+    userGrowth: 0,
+    orderGrowth: 0,
+    revenueGrowth: 0,
+    productGrowth: 0
+  };
   const salesData = analyticsData?.salesData || { labels: [], values: [] };
   const categoryData = analyticsData?.categoryData || { labels: [], values: [] };
   const topProducts = analyticsData?.topProducts || [];
@@ -239,34 +242,40 @@ const Analytics = () => {
         >
           <h2 className="text-xl font-semibold mb-4 dark:text-white">Sales Trend</h2>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={salesData.labels.map((label, index) => ({
-                month: label,
-                amount: salesData.values[index] || 0
-              }))}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" stroke="#718096" />
-                <YAxis stroke="#718096" />
-                <Tooltip 
-                  formatter={(value) => formatCurrency(value)}
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                  }}
-                />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="amount" 
-                  stroke="#4F46E5"
-                  strokeWidth={2}
-                  dot={{ fill: '#4F46E5', strokeWidth: 2 }}
-                  activeDot={{ r: 8 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {salesData.labels && salesData.labels.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={salesData.labels.map((label, index) => ({
+                  month: label,
+                  amount: salesData.values[index] || 0
+                }))}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" stroke="#718096" />
+                  <YAxis stroke="#718096" />
+                  <Tooltip 
+                    formatter={(value) => formatCurrency(value)}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                  />
+                  <Legend />
+                  <Line 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#4F46E5"
+                    strokeWidth={2}
+                    dot={{ fill: '#4F46E5', strokeWidth: 2 }}
+                    activeDot={{ r: 8 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 dark:text-gray-400">No sales data available</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -279,36 +288,42 @@ const Analytics = () => {
         >
           <h2 className="text-xl font-semibold mb-4 dark:text-white">Category Distribution</h2>
           <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData.labels.map((label, index) => ({
-                    name: label,
-                    value: categoryData.values[index] || 0
-                  }))}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.labels.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => formatNumber(value)}
-                  contentStyle={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                  }}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {categoryData.labels && categoryData.labels.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={categoryData.labels.map((label, index) => ({
+                      name: label,
+                      value: categoryData.values[index] || 0
+                    }))}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {categoryData.labels.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => formatNumber(value)}
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }}
+                  />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500 dark:text-gray-400">No category data available</p>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
@@ -321,39 +336,45 @@ const Analytics = () => {
         className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
       >
         <h2 className="text-xl font-semibold mb-4 dark:text-white">Top Selling Products</h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700">
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Product</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sales</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Revenue</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {topProducts.map((product, index) => (
-                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {product.image && (
-                        <img
-                          src={`data:image/jpeg;base64,${product.image}`}
-                          alt={product.name}
-                          className="w-10 h-10 rounded-full object-cover mr-3"
-                        />
-                      )}
-                      <span className="text-gray-900 dark:text-white">{product.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{product.category}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{formatNumber(product.sales)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{formatCurrency(product.revenue)}</td>
+        {topProducts && topProducts.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="bg-gray-50 dark:bg-gray-700">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sales</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Revenue</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {topProducts.map((product, index) => (
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {product.image && (
+                          <img
+                            src={`data:image/jpeg;base64,${product.image}`}
+                            alt={product.name}
+                            className="w-10 h-10 rounded-full object-cover mr-3"
+                          />
+                        )}
+                        <span className="text-gray-900 dark:text-white">{product.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{product.category}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{formatNumber(product.sales)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white">{formatCurrency(product.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-gray-500 dark:text-gray-400">No sales data available yet. Start by creating orders!</p>
+          </div>
+        )}
       </motion.div>
         </div>
       </div>

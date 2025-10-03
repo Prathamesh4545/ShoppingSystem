@@ -34,7 +34,10 @@ const AllProducts = () => {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log('Products fetched successfully');
+      console.log('Products fetched:', response.data);
+      if (response.data.length > 0 && response.data[0].images) {
+        console.log('First product images:', response.data[0].images);
+      }
       setProducts(response.data);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -78,7 +81,19 @@ const AllProducts = () => {
         price: formData.price,
         quantity: formData.quantity,
         available: formData.available,
-        releaseDate: formData.releaseDate
+        releaseDate: formData.releaseDate,
+        rating: formData.rating || null,
+        sku: formData.sku || null,
+        weight: formData.weight || null,
+        dimensions: formData.dimensions || null,
+        color: formData.color || null,
+        size: formData.size || null,
+        material: formData.material || null,
+        warranty: formData.warranty || null,
+        stockAlert: formData.stockAlert || 10,
+        featured: formData.featured || false,
+        trending: formData.trending || false,
+        customShippingFee: formData.customShippingFee || null
       };
 
       // Create FormData
@@ -140,7 +155,19 @@ const AllProducts = () => {
         releaseDate: formData.releaseDate,
         available: formData.available,
         quantity: formData.quantity,
-        price: formData.price
+        price: formData.price,
+        rating: formData.rating || null,
+        sku: formData.sku || null,
+        weight: formData.weight || null,
+        dimensions: formData.dimensions || null,
+        color: formData.color || null,
+        size: formData.size || null,
+        material: formData.material || null,
+        warranty: formData.warranty || null,
+        stockAlert: formData.stockAlert || 10,
+        featured: formData.featured || false,
+        trending: formData.trending || false,
+        customShippingFee: formData.customShippingFee || null
       };
 
       // Add product data as JSON string with correct content type
@@ -148,30 +175,23 @@ const AllProducts = () => {
         type: 'application/json'
       }));
 
-      // Always include images part as required by @RequestPart("images")
       if (formData.images && formData.images.length > 0) {
         Array.from(formData.images).forEach(image => {
           data.append('images', image);
         });
-      } else {
-        // If no new images, send empty array to satisfy @RequestPart requirement
-        data.append('images', new Blob([JSON.stringify([])], {
-          type: 'application/json'
-        }));
       }
 
-      console.log('Updating product');
+      let url = `${import.meta.env.VITE_API_URL}/api/product/${selectedProduct.id}`;
+      if (formData.removedImageIds && formData.removedImageIds.length > 0) {
+        url += `?removedImageIds=${formData.removedImageIds.join(',')}`;
+      }
 
-      const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/product/${selectedProduct.id}`,
-        data,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data',
-          }
+      const response = await axios.put(url, data, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
         }
-      );
+      });
 
       if (response.status === 200) {
         toast.success('Product updated successfully!');
@@ -197,7 +217,20 @@ const AllProducts = () => {
       quantity: product.quantity || 0,
       available: product.available ?? true,
       releaseDate: product.releaseDate ? new Date(product.releaseDate).toISOString().split('T')[0] : '',
-      images: product.images || []
+      images: product.images || [],
+      rating: product.rating || null,
+      sku: product.sku || '',
+      weight: product.weight || '',
+      dimensions: product.dimensions || '',
+      color: product.color || '',
+      size: product.size || '',
+      material: product.material || '',
+      warranty: product.warranty || '',
+      stockAlert: product.stockAlert || 10,
+      featured: product.featured || false,
+      trending: product.trending || false,
+      customShippingFee: product.customShippingFee || null,
+      removedImageIds: []
     };
     setSelectedProduct(formattedProduct);
     toggleUpdateModal(formattedProduct);
@@ -368,14 +401,16 @@ const AllProducts = () => {
               <div className="relative aspect-w-16 aspect-h-9 bg-gray-100 dark:bg-gray-700">
                 {product.images && product.images.length > 0 ? (
                   <img
-                    src={product.images[0].imagePath ? 
-                      `${import.meta.env.VITE_API_URL}/api/images/${product.images[0].imagePath}` :
-                      `data:${product.images[0].imageType};base64,${product.images[0].imageData}`
+                    src={
+                      product.images[0].imageUrl ||
+                      (product.images[0].imageData && product.images[0].imageType
+                        ? `data:${product.images[0].imageType};base64,${product.images[0].imageData}`
+                        : 'https://placehold.co/400x300?text=No+Image')
                     }
                     alt={product.productName}
                     className="w-full h-48 object-cover"
                     onError={(e) => {
-                      console.error('Image load error:', e);
+                      console.error('Image load error for product:', product.id, product.images[0]);
                       e.target.src = 'https://placehold.co/400x300?text=No+Image';
                     }}
                   />

@@ -83,20 +83,7 @@ const CartProvider = ({ children }) => {
     return errorMessage;
   }, []);
 
-  const fetchActiveDeals = useCallback(async () => {
-    if (!isAuthenticated || !token) return;
 
-    try {
-      const response = await axios.get(`${API_URL}/deals/active`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      dispatch({ type: "UPDATE_DEALS", payload: response.data });
-    } catch (error) {
-      handleApiError(error, "Failed to fetch active deals");
-    }
-  }, [isAuthenticated, token, handleApiError]);
 
   const fetchCart = useCallback(async () => {
     if (!isAuthenticated || !hasRole("USER")) {
@@ -106,30 +93,13 @@ const CartProvider = ({ children }) => {
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
-      const [cartResponse, dealsResponse] = await Promise.all([
-        axios.get(`${API_URL}/cart`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-        axios.get(`${API_URL}/deals/active`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-      ]);
+      const response = await axios.get(`${API_URL}/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const cartWithDeals = cartResponse.data.items.map(item => ({
-        ...item,
-        product: {
-          ...item.product,
-          dealInfo: dealsResponse.data.find(deal => 
-            deal.products?.some(p => p.id === item.product.id)
-          )
-        }
-      }));
-
-      dispatch({ type: "SET_CART", payload: cartWithDeals });
+      dispatch({ type: "SET_CART", payload: response.data.items || [] });
     } catch (error) {
       handleApiError(error, "Failed to load cart");
     }
@@ -144,7 +114,7 @@ const CartProvider = ({ children }) => {
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
-      const response = await axios.post(
+      await axios.post(
         `${API_URL}/cart/add?productId=${productId}&quantity=${quantity}`,
         null,
         {
@@ -153,12 +123,12 @@ const CartProvider = ({ children }) => {
           },
         }
       );
-      dispatch({ type: "ADD_ITEM", payload: response.data.items });
+      await fetchCart();
       toast.success("Item added to cart successfully!");
     } catch (error) {
       handleApiError(error, "Failed to add item to cart");
     }
-  }, [isAuthenticated, token, hasRole, handleApiError]);
+  }, [isAuthenticated, token, hasRole, handleApiError, fetchCart]);
 
   const removeFromCart = useCallback(async (productId) => {
     if (!isAuthenticated || !hasRole("USER")) {
@@ -233,10 +203,8 @@ const CartProvider = ({ children }) => {
   useEffect(() => {
     if (isAuthenticated && hasRole("USER")) {
       fetchCart();
-      const dealCheckInterval = setInterval(fetchActiveDeals, 60000);
-      return () => clearInterval(dealCheckInterval);
     }
-  }, [isAuthenticated, fetchCart, fetchActiveDeals, hasRole]);
+  }, [isAuthenticated, fetchCart, hasRole]);
 
   const totalPrice = useMemo(() => {
     return state.cart.reduce((total, item) => {
@@ -245,7 +213,14 @@ const CartProvider = ({ children }) => {
       const quantity = item.quantity || 0;
       const dealInfo = product.dealInfo;
 
-      if (dealInfo && new Date(dealInfo.endDate) > new Date()) {
+      const isDealValid = dealInfo && (() => {
+        const dealIsActive = dealInfo.active !== undefined ? dealInfo.active : dealInfo.isActive;
+        if (!dealIsActive) return false;
+        const endDateTime = new Date(`${dealInfo.endDate}T${dealInfo.endTime || '23:59:59'}`);
+        return endDateTime > new Date();
+      })();
+
+      if (isDealValid) {
         const discountedPrice = price * (1 - dealInfo.discountPercentage / 100);
         return total + (discountedPrice * quantity);
       }

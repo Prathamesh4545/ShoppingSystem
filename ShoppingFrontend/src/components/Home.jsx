@@ -15,6 +15,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ProductCard from "./Product/ProductCard";
 import ThemeContext from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
+
 import {
   FaArrowLeft,
   FaFilter,
@@ -24,11 +25,12 @@ import {
   FaStar,
   FaClock,
   FaTag,
+  FaPercent,
 } from "react-icons/fa";
 
 const Home = () => {
   const { isDarkMode } = useContext(ThemeContext);
-  const { products, isLoading, error } = useContext(DataContext);
+  const { products, loading: isLoading, error } = useContext(DataContext);
   const { addToCart } = useCart();
   const { isAuthenticated, token, logout, refreshToken, isTokenExpired } =
     useAuth();
@@ -165,16 +167,24 @@ const Home = () => {
   // Apply discount to products based on active deals
   const applyDiscount = useCallback(
     (product) => {
-      const deal = activeDeals.find((deal) =>
-        deal.products?.some((p) => p.id === product.id)
-      );
-      const price = product.price || 0;
-      if (deal) {
-        return price * (1 - deal.discountPercentage / 100);
+      if (!product.deals || product.deals.length === 0) return parseFloat(product.price) || 0;
+      
+      const activeDeal = product.deals.find((deal) => {
+        if (!deal.isActive) return false;
+        const now = new Date();
+        const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
+        const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
+        return now >= startDateTime && now <= endDateTime;
+      });
+      
+      const price = parseFloat(product.price) || 0;
+      if (activeDeal && activeDeal.discountPercentage) {
+        const discount = parseFloat(activeDeal.discountPercentage) || 0;
+        return price * (1 - discount / 100);
       }
       return price;
     },
-    [activeDeals]
+    []
   );
 
   // Optimized Product Filtering with Sorting
@@ -186,17 +196,29 @@ const Home = () => {
           dealInfo: currentDeal,
         }))
       : (selectedCategory === "All"
-          ? products
-          : products.filter((product) => product.category === selectedCategory)
+          ? products || []
+          : (products || []).filter((product) => product.category === selectedCategory)
         )
-          .filter((product) => !isNaN(product.price))
-          .map((product) => ({
-            ...product,
-            discountedPrice: applyDiscount(product),
-            dealInfo: activeDeals.find((deal) =>
-              deal.products?.some((p) => p.id === product.id)
-            ),
-          }));
+          .filter((product) => product && !isNaN(parseFloat(product.price)))
+          .map((product) => {
+            const activeDeal = product.deals?.find((deal) => {
+              if (!deal || !deal.isActive) return false;
+              try {
+                const now = new Date();
+                const startDateTime = new Date(`${deal.startDate}T${deal.startTime}`);
+                const endDateTime = new Date(`${deal.endDate}T${deal.endTime}`);
+                return now >= startDateTime && now <= endDateTime;
+              } catch (e) {
+                console.error('Error parsing deal dates:', e);
+                return false;
+              }
+            });
+            return {
+              ...product,
+              discountedPrice: applyDiscount(product),
+              dealInfo: activeDeal || null,
+            };
+          });
 
     // Apply sorting
     switch (sortBy) {
@@ -330,6 +352,7 @@ const Home = () => {
           : "bg-gradient-to-br from-blue-50 via-white to-purple-50"
       }`}
     >
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -376,40 +399,97 @@ const Home = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300 }}
-          className="bg-white dark:bg-gray-800 shadow-[0_4px_20px_rgba(0,0,0,0.1)] py-4"
+          className={`relative overflow-hidden backdrop-blur-2xl border-b-2 ${
+            isDarkMode
+              ? 'bg-gradient-to-r from-gray-900/95 via-purple-900/60 to-blue-900/60 border-purple-500/30'
+              : 'bg-gradient-to-r from-white via-purple-50/50 to-blue-50/50 border-purple-300/50'
+          } shadow-2xl py-8`}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+          {/* Animated Background Pattern */}
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
+            <div className="absolute top-0 left-0 w-full h-full opacity-10">
+              <div className="absolute top-10 left-10 w-32 h-32 bg-blue-500 rounded-full blur-3xl"></div>
+              <div className="absolute bottom-10 right-10 w-32 h-32 bg-purple-500 rounded-full blur-3xl"></div>
+            </div>
+          </div>
+          
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-start space-x-4 flex-1">
                 <motion.button
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.1, x: -5 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={handleBackToAll}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className={`p-4 rounded-2xl backdrop-blur-md border-2 transition-all duration-300 group ${
+                    isDarkMode
+                      ? 'bg-white/10 border-white/20 hover:bg-white/20 hover:border-white/40'
+                      : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-purple-400'
+                  } shadow-xl hover:shadow-2xl`}
                 >
-                  <FaArrowLeft className="w-5 h-5" />
+                  <FaArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
                 </motion.button>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {currentDeal.title}
-                  </h2>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Valid till{" "}
-                    {new Date(currentDeal.endDate).toLocaleDateString()}
-                  </p>
+                <div className="flex-1">
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 mb-3"
+                  >
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-orange-500 blur-xl opacity-50 animate-pulse"></div>
+                      <FaFire className="relative text-3xl text-orange-500" />
+                    </div>
+                    <h2 className="text-4xl font-bold bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 bg-clip-text text-transparent">
+                      {currentDeal.title}
+                    </h2>
+                  </motion.div>
+                  <div className="flex flex-wrap items-center gap-4 ml-12">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/20">
+                      <FaClock className="text-orange-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Valid till {new Date(currentDeal.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 dark:bg-black/20 backdrop-blur-md border border-white/20">
+                      <FaTag className="text-green-500" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        {selectedDealProducts.length} Products
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="flex items-center space-x-2 bg-gradient-to-r from-primary to-primary-dark px-4 py-2 rounded-full shadow-lg"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+                className="relative group"
               >
-                <FaTag className="w-5 h-5 text-white" />
-                <span className="text-lg font-semibold text-white">
-                  {currentDeal.discountPercentage}% OFF
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-orange-500 blur-2xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+                <div className="relative flex items-center gap-4 bg-gradient-to-r from-red-500 via-orange-500 to-red-500 px-8 py-5 rounded-2xl shadow-2xl">
+                  <FaPercent className="w-8 h-8 text-white" />
+                  <div className="text-white">
+                    <div className="text-5xl font-bold leading-none">{currentDeal.discountPercentage}%</div>
+                    <div className="text-sm font-semibold tracking-wider mt-1">DISCOUNT</div>
+                  </div>
+                </div>
               </motion.div>
             </div>
+            
+            {/* Deal Description */}
+            {currentDeal.description && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mt-6 ml-16 max-w-3xl"
+              >
+                <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed">
+                  {currentDeal.description}
+                </p>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       )}

@@ -22,11 +22,10 @@ const UpdateProduct = () => {
           return;
         }
 
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/products/${id}`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/product/${id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
-          
         });
         setProduct(response.data);
       } catch (error) {
@@ -57,25 +56,53 @@ const UpdateProduct = () => {
       }
 
       const data = new FormData();
-      data.append('name', formData.productName);
-      data.append('description', formData.desc);
-      data.append('price', formData.price);
-      data.append('stock', formData.stock);
-      data.append('category', formData.category);
-      if (formData.image && formData.image !== product.image) {
-        data.append('image', formData.image);
+      
+      const productData = {
+        id: id,
+        productName: formData.productName,
+        brand: formData.brand,
+        desc: formData.desc,
+        category: formData.category,
+        releaseDate: formData.releaseDate,
+        available: formData.available,
+        quantity: formData.quantity,
+        price: formData.price,
+        rating: formData.rating || null,
+        sku: formData.sku || null,
+        weight: formData.weight || null,
+        dimensions: formData.dimensions || null,
+        color: formData.color || null,
+        size: formData.size || null,
+        material: formData.material || null,
+        warranty: formData.warranty || null,
+        stockAlert: formData.stockAlert || 10,
+        featured: formData.featured || false,
+        trending: formData.trending || false,
+        customShippingFee: formData.customShippingFee || null
+      };
+      
+      data.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
+      
+      if (formData.images && formData.images.length > 0) {
+        Array.from(formData.images).forEach(image => {
+          data.append('images', image);
+        });
       }
 
-      const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/products/${id}`, data, {
+      let url = `${import.meta.env.VITE_API_URL}/api/product/${id}`;
+      if (formData.removedImageIds && formData.removedImageIds.length > 0) {
+        url += `?removedImageIds=${formData.removedImageIds.join(',')}`;
+      }
+
+      const response = await axios.put(url, data, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (response.status === 200) {
         toast.success('Product updated successfully!');
-        navigate('/products');
+        setTimeout(() => navigate('/admin/products'), 500);
       }
     } catch (error) {
       console.error('Error updating product:', error);

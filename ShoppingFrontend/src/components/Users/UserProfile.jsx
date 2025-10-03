@@ -1,5 +1,5 @@
 import { useState, useEffect, Fragment, useContext } from "react";
-import { useUser } from "../../context/UserContext";
+import { useAuth } from "../../context/AuthContext";
 import { DataContext } from "../../context/ProductContext";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
@@ -20,7 +20,7 @@ import AddressForm from "../Addresses/AddressForm";
 
 const UserProfile = () => {
   const { products } = useContext(DataContext);
-  const { user, updateUser } = useUser();
+  const { user, token } = useAuth();
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -58,7 +58,12 @@ const UserProfile = () => {
         phoneNumber: user.phoneNumber || "",
         password: "",
       });
-      setImagePreview(user.imagePreview || null);
+      // Construct image preview from imageData and imageType
+      if (user.imageData && user.imageType) {
+        setImagePreview(`data:${user.imageType};base64,${user.imageData}`);
+      } else {
+        setImagePreview(null);
+      }
     }
   }, [user]);
 
@@ -141,11 +146,35 @@ const UserProfile = () => {
 
     try {
       setLoading((prev) => ({ ...prev, submitting: true }));
-      await updateUser(formData, imageFile);
+      
+      const formDataToSend = new FormData();
+      formDataToSend.append("userName", formData.userName);
+      formDataToSend.append("firstName", formData.firstName);
+      formDataToSend.append("lastName", formData.lastName);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("phoneNumber", formData.phoneNumber);
+      if (formData.password) formDataToSend.append("password", formData.password);
+      if (imageFile) formDataToSend.append("imageFile", imageFile);
+
+      const response = await axios.put(
+        `${API_URL}/users/${user.id}`,
+        formDataToSend,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const updatedUser = response.data;
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      window.location.reload();
+      
       setIsEditing(false);
       toast.success("Profile updated successfully!");
     } catch (error) {
-      toast.error(error.message || "Failed to update profile");
+      toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setLoading((prev) => ({ ...prev, submitting: false }));
     }
@@ -583,9 +612,48 @@ const UserProfile = () => {
             <h2 className={`text-lg font-medium mb-4 ${isDarkMode ? "text-white" : "text-gray-900"}`}>
               Order History
             </h2>
-            <p className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-              No orders found
-            </p>
+            {loading.orders ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : error.orders ? (
+              <p className={`text-center py-8 text-red-500`}>{error.orders}</p>
+            ) : orders.length > 0 ? (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order.id} className={`p-4 rounded-lg border ${
+                    isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200"
+                  }`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                          Order #{order.id}
+                        </p>
+                        <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                          ₹{order.totalAmount?.toFixed(2) || "0.00"}
+                        </p>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          order.status === "DELIVERED" ? "bg-green-100 text-green-800" :
+                          order.status === "PENDING" ? "bg-yellow-100 text-yellow-800" :
+                          "bg-blue-100 text-blue-800"
+                        }`}>
+                          {order.status}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                No orders found
+              </p>
+            )}
           </div>
         )}
 
@@ -607,9 +675,54 @@ const UserProfile = () => {
                 Add New Address
               </button>
             </div>
-            <p className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
-              No addresses found
-            </p>
+            {loading.addresses ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : error.addresses ? (
+              <p className={`text-center py-8 text-red-500`}>{error.addresses}</p>
+            ) : addresses.length > 0 ? (
+              <div className="grid gap-4">
+                {addresses.map((address) => (
+                  <div key={address.id} className={`p-4 rounded-lg border ${
+                    isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200"
+                  }`}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className={`font-medium ${isDarkMode ? "text-white" : "text-gray-900"}`}>
+                          {address.type || "Home"}
+                        </p>
+                        <p className={`text-sm mt-1 ${isDarkMode ? "text-gray-300" : "text-gray-600"}`}>
+                          {address.street}, {address.city}
+                        </p>
+                        <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                          {address.state} - {address.zipCode}, {address.country}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleOpenEditAddress(address)}
+                          className="text-blue-600 hover:text-blue-700 text-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAddress(address.id)}
+                          disabled={loading.deleting}
+                          className="text-red-600 hover:text-red-700 text-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className={`text-center py-8 ${isDarkMode ? "text-gray-400" : "text-gray-500"}`}>
+                No addresses found
+              </p>
+            )}
           </div>
         )}
       </div>
