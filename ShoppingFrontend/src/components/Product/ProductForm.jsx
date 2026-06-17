@@ -82,15 +82,26 @@ const ProductForm = ({ product, onSubmit, onCancel, isSubmitting, isModal }) => 
     const { name, value, type, checked, files } = e.target;
     if (type === 'file') {
       if (files && files.length > 0) {
+        // Only allow image files (e.g., jpeg, png, gif, webp) to be uploaded and previewed
+        const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        const validFiles = Array.from(files).filter(file =>
+          allowedImageTypes.includes(file.type)
+        );
+
+        if (validFiles.length === 0) {
+          toast.error('Please select a valid image file (JPEG, PNG, GIF, WebP).');
+          return;
+        }
+
         setFormData(prev => ({
           ...prev,
-          images: files
+          images: validFiles
         }));
         
-        // Create preview URLs for new images
-        const previews = Array.from(files).map(file => URL.createObjectURL(file));
+        // Create preview URLs for new images (only for validated image files)
+        const previews = validFiles.map(file => URL.createObjectURL(file));
         setPreviewImages(previews);
-        toast.success(`${files.length} new image(s) selected`);
+        toast.success(`${validFiles.length} new image(s) selected`);
       }
     } else {
       if (name === 'category' && value === 'ADD_NEW') {
